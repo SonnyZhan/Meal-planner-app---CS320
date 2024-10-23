@@ -8,6 +8,8 @@ class User(models.Model):
 
 class DiningHall(models.Model):
     name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.name
 
 class Menu(models.Model):
     BREAKFAST = 'breakfast'
@@ -29,7 +31,9 @@ class Menu(models.Model):
         max_length=10,
         choices=TIME_SLOTS,
     )
-    
+    def __str__(self):
+        return f"{self.dining_hall.name} - {self.time_slot}"
+
 class Food(models.Model):
     menu = models.ForeignKey(Menu, related_name='foods', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -38,6 +42,8 @@ class Food(models.Model):
     proteins = models.FloatField()
     fats = models.FloatField()
     calcium = models.FloatField()
+    def __str__(self):
+        return self.name
 
 
 
