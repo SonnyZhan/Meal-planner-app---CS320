@@ -1,3 +1,4 @@
+
 from itertools import combinations
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -51,3 +52,7 @@ def search_food_combinations(request):
     # If no combination is found
     return Response({"message": "No combination of foods in the selected menu satisfies the given requirements."},
                     status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def hello_world(request):
+    return Response({'message': 'Hello, world!'})
