@@ -1,48 +1,51 @@
 from rest_framework import serializers
-from .models import Task
+from .models import User, DiningHall, Menu, Food
 
-class User(models.Model):
-    userID = models.IntegerField()
-    plannerID = models.IntegerField()
-
-class DiningHall(models.Model):
-    name = models.CharField(max_length=100)
-    def __str__(self):
-        return self.name
-
-class Menu(models.Model):
-    BREAKFAST = 'breakfast'
-    LUNCH = 'lunch'
-    BRUNCH = 'brunch'
-    DINNER = 'dinner'
-    LATE_NIGHT = 'late night'
-
-    TIME_SLOTS = [
-        (BREAKFAST, 'Breakfast'),
-        (LUNCH, 'Lunch'),
-        (BRUNCH, 'Brunch'),
-        (DINNER, 'Dinner'),
-        (LATE_NIGHT, 'Late Night'),
-    ]
-
-    dining_hall = models.ForeignKey(DiningHall, related_name='menus', on_delete=models.CASCADE)
-    time_slot = models.CharField(
-        max_length=10,
-        choices=TIME_SLOTS,
-    )
-    def __str__(self):
-        return f"{self.dining_hall.name} - {self.time_slot}"
-
-class Food(models.Model):
-    menu = models.ForeignKey(Menu, related_name='foods', on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    calories = models.IntegerField()
-    carbs = models.FloatField()
-    proteins = models.FloatField()
-    fats = models.FloatField()
-    calcium = models.FloatField()
-    def __str__(self):
-        return self.name
+# User Serializer
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['userID', 'plannerID']
 
 
+# DiningHall Serializer
+class DiningHallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiningHall
+        fields = ['id', 'name']
 
+
+# Menu Serializer
+class MenuSerializer(serializers.ModelSerializer):
+    dining_hall = DiningHallSerializer(read_only=True)  # Nested serializer to show dining hall info
+
+    class Meta:
+        model = Menu
+        fields = ['id', 'dining_hall', 'time_slot']
+
+
+# Alternative MenuSerializer (to allow selecting dining hall by ID)
+class MenuSerializer(serializers.ModelSerializer):
+    dining_hall = serializers.PrimaryKeyRelatedField(queryset=DiningHall.objects.all())  # Allows selecting dining hall by ID
+
+    class Meta:
+        model = Menu
+        fields = ['id', 'dining_hall', 'time_slot']
+
+
+# Food Serializer
+class FoodSerializer(serializers.ModelSerializer):
+    menu = MenuSerializer(read_only=True)  # Nested serializer to show menu details
+
+    class Meta:
+        model = Food
+        fields = ['id', 'menu', 'name', 'calories', 'carbs', 'proteins', 'fats', 'calcium']
+
+
+# Alternative FoodSerializer (to allow selecting menu by ID)
+class FoodSerializer(serializers.ModelSerializer):
+    menu = serializers.PrimaryKeyRelatedField(queryset=Menu.objects.all())  # Allows selecting menu by ID
+
+    class Meta:
+        model = Food
+        fields = ['id', 'menu', 'name', 'calories', 'carbs', 'proteins', 'fats', 'calcium']
