@@ -1,5 +1,6 @@
 
 
+
 # Create your views here.
 from itertools import combinations
 from rest_framework.decorators import api_view
@@ -48,3 +49,7 @@ def search_food_combinations(request):
     # If no combination found
     return Response({"message": "No combination of foods satisfies the given requirements."},
                     status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def hello_world(request):
+    return Response({'message': 'Hello, world!'})
