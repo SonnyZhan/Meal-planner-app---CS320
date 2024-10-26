@@ -36,6 +36,11 @@
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.switch-input:checked + .switch-label .switch-button {
+.switch-input:checked + .switch-label .switch-button{
   transform: translateX(25px);
 }
+
+
+
+
+
