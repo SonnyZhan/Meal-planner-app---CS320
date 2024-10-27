@@ -1,11 +1,13 @@
 // App.js
 import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import axios from "axios";
 import DiningHallForm from "./components/DiningHallForm";
 import MenuForm from "./components/MenuForm";
 import FoodForm from "./components/FoodForm";
 import MealPlanner from "./components/MealPlanner";
-import MealCombinations from "./components/MealCombinations"; // Import the new component
+import MealCombinations from "./components/MealCombinations";
+import Card from "./components/Card"; 
 
 const App = () => {
   const [diningHalls, setDiningHalls] = useState([]);
@@ -40,28 +42,33 @@ const App = () => {
   };
 
   const handleFoodAdded = (newFood) => {
-    setFoods([...foods, newFood]); // Update foods list with the new food item
+    setFoods([...foods, newFood]);
   };
 
   return (
-    <div className="App">
-      <h1>Meal Planner & Menu Management</h1>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Card />} />
+        <Route
+          path="/main"
+          element={
+            <div className="App">
+              <h1>Meal Planner & Menu Management</h1>
 
-      {/* Form to add new dining halls */}
-      <DiningHallForm onDiningHallCreated={fetchDiningHalls} />
-
-      {/* Form to add new menus, passing foods for selection */}
-      <MenuForm diningHalls={diningHalls} foods={foods} onMenuCreated={fetchMenus} />
-
-      {/* Form to add new food items */}
-      <FoodForm onFoodAdded={handleFoodAdded} />
-
-      {/* Component for meal planning based on available menus */}
-      <MealPlanner menus={menus} />
-
-      {/* Component to display saved meal combinations */}
-      <MealCombinations />
-    </div>
+              <DiningHallForm onDiningHallCreated={fetchDiningHalls} />
+              <MenuForm
+                diningHalls={diningHalls}
+                foods={foods}
+                onMenuCreated={fetchMenus}
+              />
+              <FoodForm onFoodAdded={handleFoodAdded} />
+              <MealPlanner menus={menus} />
+              <MealCombinations />
+            </div>
+          }
+        />
+      </Routes>
+    </Router>
   );
 };
 
