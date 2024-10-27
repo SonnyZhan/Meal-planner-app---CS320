@@ -82,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'meal_db', 
         'USER': 'postgres',
-        'PASSWORD': '123',
+        'PASSWORD': 'ems54321',
         'HOST': '127.0.0.1', 
         'PORT': '5432',
     }
