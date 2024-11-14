@@ -1,85 +1,55 @@
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
-
-# Create your models here.
 
 class User(models.Model):
-    userID = models.IntegerField()
-    plannerID = models.IntegerField()
+    user_id = models.IntegerField(unique=True)
+    planner_id = models.IntegerField(unique=True)
+
 
 class DiningHall(models.Model):
-    name = models.CharField(max_length=100)
+    location_id = models.IntegerField(unique=True)
+    name = models.CharField(max_length=200)
+    opening_hours = models.TimeField(null=True, blank=True)
+    closing_hours = models.TimeField(null=True, blank=True)
+
     def __str__(self):
         return self.name
+
+
+class Menu(models.Model):
+    dining_hall = models.ForeignKey(DiningHall, on_delete=models.CASCADE)
+    meal_name = models.CharField(max_length=100)
+    category_name = models.CharField(max_length=100)
+    menu_date = models.DateField()  # New field added for the date of the menu
+
+    class Meta:
+        unique_together = ('dining_hall', 'meal_name', 'menu_date')
+
+    def __str__(self):
+        return f"{self.meal_name} - {self.menu_date}"
+
 
 
 class Food(models.Model):
-    name = models.CharField(max_length=100)
-    calories = models.FloatField(validators=[MinValueValidator(0)])
-    proteins = models.FloatField(validators=[MinValueValidator(0)])
-    fats = models.FloatField(validators=[MinValueValidator(0)])
-    carbs = models.FloatField(validators=[MinValueValidator(0)])
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
+    dish_name = models.CharField(max_length=200)
+    healthfulness = models.IntegerField(null=True, blank=True)
+    carbon_list = models.CharField(max_length=10, null=True, blank=True)
+    ingredient_list = models.JSONField(default=list)
+    allergens = models.JSONField(default=list)
+    recipe_webcode = models.CharField(max_length=100, null=True, blank=True)
+    diets = models.JSONField(default=list)
+    serving_size = models.CharField(max_length=50, null=True, blank=True)
+    calories = models.IntegerField(null=True, blank=True)
+    calories_from_fat = models.IntegerField(null=True, blank=True)
+    total_fat = models.CharField(max_length=50, null=True, blank=True)
+    sat_fat = models.CharField(max_length=50, null=True, blank=True)
+    trans_fat = models.CharField(max_length=50, null=True, blank=True)
+    cholesterol = models.CharField(max_length=50, null=True, blank=True)
+    sodium = models.CharField(max_length=50, null=True, blank=True)
+    total_carb = models.CharField(max_length=50, null=True, blank=True)
+    dietary_fiber = models.CharField(max_length=50, null=True, blank=True)
+    sugars = models.CharField(max_length=50, null=True, blank=True)
+    protein = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        return self.name
-
-class Menu(models.Model):
-   # Enum for time slots
-    BREAKFAST = 'breakfast'
-    LUNCH = 'lunch'
-    BRUNCH = 'brunch'
-    DINNER = 'dinner'
-    LATE_NIGHT = 'late night'
-
-    TIME_SLOTS = [
-        (BREAKFAST, 'Breakfast'),
-        (LUNCH, 'Lunch'),
-        (BRUNCH, 'Brunch'),
-        (DINNER, 'Dinner'),
-        (LATE_NIGHT, 'Late Night'),
-    ]
-
-    # Enum for days of the week
-    MONDAY = 'monday'
-    TUESDAY = 'tuesday'
-    WEDNESDAY = 'wednesday'
-    THURSDAY = 'thursday'
-    FRIDAY = 'friday'
-    SATURDAY = 'saturday'
-    SUNDAY = 'sunday'
-
-    DAYS_OF_WEEK = [
-        (MONDAY, 'Monday'),
-        (TUESDAY, 'Tuesday'),
-        (WEDNESDAY, 'Wednesday'),
-        (THURSDAY, 'Thursday'),
-        (FRIDAY, 'Friday'),
-        (SATURDAY, 'Saturday'),
-        (SUNDAY, 'Sunday'),
-    ]
-
-    dining_hall = models.ForeignKey(DiningHall, related_name='menus', on_delete=models.CASCADE)
-    time_slot = models.CharField(max_length=10, choices=TIME_SLOTS)
-    day_of_week = models.CharField(max_length=9, choices=DAYS_OF_WEEK, null=True, blank=True)
-    date = models.DateField(null=True, blank=True)  # Specific date for the menu
-    foods = models.ManyToManyField(Food, related_name='menus')  # Many-to-many relationship with foods
-    description = models.TextField(null=True, blank=True)  # Optional description
-    is_special = models.BooleanField(default=False)  # Flag for special menus
-
-    class Meta:
-        unique_together = ['dining_hall', 'time_slot', 'date', 'day_of_week']
-
-    def __str__(self):
-        return f"{self.dining_hall.name} - {self.get_time_slot_display()} ({self.date or self.get_day_of_week_display()})"
-
-class MealCombination(models.Model):
-    menu = models.ForeignKey('Menu', related_name='meal_combinations', on_delete=models.CASCADE)
-    foods = models.ManyToManyField('Food', related_name='meal_combinations')
-    calories = models.FloatField()
-    proteins = models.FloatField()
-    fats = models.FloatField()
-    carbs = models.FloatField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Combination for {self.menu} with {self.foods.count()} items"
+        return self.dish_name
