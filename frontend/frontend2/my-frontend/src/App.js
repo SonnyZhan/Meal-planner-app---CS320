@@ -8,6 +8,7 @@ import FoodForm from "./components/FoodForm";
 import MealPlanner from "./components/MealPlanner";
 import MealCombinations from "./components/MealCombinations";
 import Card from "./components/Card"; 
+import './App.css';
 
 const App = () => {
   const [diningHalls, setDiningHalls] = useState([]);
