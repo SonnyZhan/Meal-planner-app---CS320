@@ -2,16 +2,17 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import Switch from "./Switch";
 
-const Card = () => {
+const Card = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true); 
   const navigate = useNavigate();  
-  const handleSubmit = (e) => {
 
+  const handleSubmit = (e) => {
     e.preventDefault(); 
     if (isLogin) {
-      navigate("/main");
+      onLogin();
+      navigate("/allergy-filter");
     } else {
-      console.log("Login Submitted");
+      console.log("Registration Submitted");
     }
   };
 
