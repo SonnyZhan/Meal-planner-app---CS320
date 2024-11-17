@@ -1,10 +1,11 @@
-
+from django.http import JsonResponse
+import re
 from itertools import combinations
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Food, Menu, DiningHall, MealCombination
-from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer, MealCombinationSerializer
+from .models import Food, Menu, DiningHall
+from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
 
 @api_view(['GET'])
 def get_all_foods(request):
@@ -80,75 +81,96 @@ def update_menu_with_foods(request, menu_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-@api_view(['POST'])
-def satisfies_macros(foods, required_calories, required_proteins, required_fats, required_carbs):
-    """
-    Helper function to check if a combination of foods meets the required macronutrients.
-    """
-    total_calories = sum(food.calories for food in foods)
-    total_proteins = sum(food.proteins for food in foods)
-    total_fats = sum(food.fats for food in foods)
-    total_carbs = sum(food.carbs for food in foods)
-
-    return (
-        total_calories >= required_calories and
-        total_proteins >= required_proteins and
-        total_fats >= required_fats and
-        total_carbs >= required_carbs
-    )
-
-@api_view(['POST'])
-def search_food_combinations(request):
+def parse_nutritional_value(value):
+    """Helper function to parse numerical values from strings like '7.7 gram'."""
     try:
-        required_calories = float(request.data.get('calories'))
-        required_proteins = float(request.data.get('proteins'))
-        required_fats = float(request.data.get('fats'))
-        required_carbs = float(request.data.get('carbs'))
-        menu_id = request.data.get('menu_id')
+        # Extract the first numerical value using regex
+        return float(re.search(r"[-+]?\d*\.\d+|\d+", value).group())
+    except (AttributeError, TypeError, ValueError):
+        return 0.0
+
+@api_view(['GET'])
+def find_food_combination(request):
+    # Get input parameters from the request
+    try:
+        menu_id = int(request.GET.get('menu_id'))
+        target_calories = int(request.GET.get('calories'))  # Calories is an integer
+        target_carbs = float(request.GET.get('total_carbs'))
+        target_protein = float(request.GET.get('protein'))
+        allergens = request.GET.getlist('allergens')  # List of allergens to exclude
     except (TypeError, ValueError):
-        return Response({"error": "Invalid or missing nutritional requirements or menu_id."},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid input parameters'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not all([required_calories, required_proteins, required_fats, required_carbs, menu_id]):
-        return Response({"error": "All fields (menu_id, calories, proteins, fats, carbs) are required."},
-                        status=status.HTTP_400_BAD_REQUEST)
-
+    # Retrieve the specified menu
     try:
         menu = Menu.objects.get(id=menu_id)
     except Menu.DoesNotExist:
-        return Response({"error": "Menu not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Menu not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    foods_from_menu = menu.foods.all()
-    satisfying_combinations = []
+    # Get all food items for the menu, excluding items with specified allergens
+    food_items = Food.objects.filter(menu=menu)
+    filtered_foods = []
 
-    for r in range(1, len(foods_from_menu) + 1):
-        for food_combination in combinations(foods_from_menu, r):
-            if satisfies_macros(food_combination, required_calories, required_proteins, required_fats, required_carbs):
-                total_calories = sum(food.calories for food in food_combination)
-                total_proteins = sum(food.proteins for food in food_combination)
-                total_fats = sum(food.fats for food in food_combination)
-                total_carbs = sum(food.carbs for food in food_combination)
+    for food in food_items:
+        try:
+            # Skip items containing any of the specified allergens
+            food_allergens = food.allergens or []
+            if any(allergen in food_allergens for allergen in allergens):
+                continue
 
-                meal_combination = MealCombination.objects.create(
-                    menu=menu,
-                    calories=total_calories,
-                    proteins=total_proteins,
-                    fats=total_fats,
-                    carbs=total_carbs
-                )
-                meal_combination.foods.set(food_combination)
-                satisfying_combinations.append(meal_combination)
+            # Directly use the integer value for calories
+            calories = food.calories if food.calories is not None else 0
 
-    if not satisfying_combinations:
-        return Response({"message": "No combination of foods in the selected menu satisfies the given requirements."},
-                        status=status.HTTP_404_NOT_FOUND)
+            # Parse nutritional values for total_carbs and protein
+            total_carbs = parse_nutritional_value(food.total_carb)
+            protein = parse_nutritional_value(food.protein)
 
-    serializer = MealCombinationSerializer(satisfying_combinations, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+            filtered_foods.append({
+                'dish_name': food.dish_name,
+                'calories': calories,
+                'total_carbs': total_carbs,
+                'protein': protein,
+            })
+        except ValueError:
+            continue
 
-@api_view(['GET'])
-def get_meal_combinations(request):
-    combinations = MealCombination.objects.all()
-    serializer = MealCombinationSerializer(combinations, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    # If there are less than 3 valid food items, return an error
+    if len(filtered_foods) < 3:
+        return Response({'error': 'Not enough food items to form a combination'}, status=status.HTTP_404_NOT_FOUND)
+
+    exact_matches = []
+    closest_combinations = []
+    closest_diff = float('inf')
+
+    # Iterate through all combinations of three food items
+    for combo in combinations(filtered_foods, 3):
+        total_calories = sum(item['calories'] for item in combo)
+        total_carbs = sum(item['total_carbs'] for item in combo)
+        total_protein = sum(item['protein'] for item in combo)
+
+        # Check for exact match
+        if (total_calories == target_calories and
+            total_carbs == target_carbs and
+            total_protein == target_protein):
+            exact_matches.append(combo)
+            continue
+
+        # Calculate the difference from the target values
+        diff = (
+            abs(total_calories - target_calories) +
+            abs(total_carbs - target_carbs) +
+            abs(total_protein - target_protein)
+        )
+
+        # Store the combination and its difference
+        closest_combinations.append((combo, diff))
+
+    # If there are exact matches, return all of them
+    if exact_matches:
+        return Response({'exact_matches': exact_matches}, status=status.HTTP_200_OK)
+
+    # If no exact match, sort by difference and return the top 5 closest combinations
+    closest_combinations.sort(key=lambda x: x[1])
+    top_5_closest = [combo for combo, diff in closest_combinations[:5]]
+
+    return Response({'closest_combinations': top_5_closest}, status=status.HTTP_200_OK)
