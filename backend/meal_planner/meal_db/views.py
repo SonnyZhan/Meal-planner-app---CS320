@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Food, Menu, DiningHall
+import datetime
 from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
 
 @api_view(['GET'])
@@ -93,19 +94,30 @@ def parse_nutritional_value(value):
 def find_food_combination(request):
     # Get input parameters from the request
     try:
-        menu_id = int(request.GET.get('menu_id'))
-        target_calories = int(request.GET.get('calories'))  # Calories is an integer
+        dining_hall_name = request.GET.get('dining_hall')
+        date_str = request.GET.get('date')
+        meal_name = request.GET.get('meal')
+        target_calories = int(request.GET.get('calories'))
         target_carbs = float(request.GET.get('total_carbs'))
         target_protein = float(request.GET.get('protein'))
         allergens = request.GET.getlist('allergens')  # List of allergens to exclude
+
+        # Parse the date from the input
+        menu_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
     except (TypeError, ValueError):
         return Response({'error': 'Invalid input parameters'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Retrieve the specified menu
+    # Retrieve the specified dining hall
     try:
-        menu = Menu.objects.get(id=menu_id)
+        dining_hall = DiningHall.objects.get(name__iexact=dining_hall_name)
+    except DiningHall.DoesNotExist:
+        return Response({'error': 'Dining hall not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Retrieve the menu for the given dining hall, date, and meal name
+    try:
+        menu = Menu.objects.get(dining_hall=dining_hall, meal_name__iexact=meal_name, menu_date=menu_date)
     except Menu.DoesNotExist:
-        return Response({'error': 'Menu not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Menu not found for the specified dining hall, date, and meal'}, status=status.HTTP_404_NOT_FOUND)
 
     # Get all food items for the menu, excluding items with specified allergens
     food_items = Food.objects.filter(menu=menu)
