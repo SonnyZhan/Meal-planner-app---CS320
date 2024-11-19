@@ -4,7 +4,7 @@
 Make sure to double-check any allergens and talk to the Umass Staff in case of any questions.
 
 
-Special thanks to https://github.com/simon-andrews/umass-toolkit for providing the API endpoints for getting the meals.
+Special thanks to https://github.com/simon-andrews/umass-toolkit for providing the API endpoints to access UMASS Dining Hall and Food information.
 
 
 
