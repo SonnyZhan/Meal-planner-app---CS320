@@ -1,7 +1,6 @@
-// src/components/MealPlanner.js
 import React, { useState } from "react";
 import axios from "axios";
-import "./MealPlanner.css"; 
+import "./MealPlanner.css";
 
 const TIME_SLOTS = [
   { value: "breakfast", label: "Breakfast" },
@@ -12,29 +11,86 @@ const TIME_SLOTS = [
 ];
 
 const DINING_HALLS = [
-  { value: "worcester", label: "Worcester" },
-  { value: "frank", label: "Frank" },
-  { value: "berkshire", label: "Berkshire" },
-  { value: "hamp", label: "Hamp" },
+  { value: "Worcester Commons", label: "Worcester" },
+  { value: "Franklin Dining Commons", label: "Frank" },
+  { value: "Berkshire Dining Commons", label: "Berkshire" },
+  { value: "Hampshire Dining Commons", label: "Hamp" },
 ];
 
 const MealPlanner = () => {
   const [calories, setCalories] = useState("");
   const [proteins, setProteins] = useState("");
-  const [fats, setFats] = useState("");
   const [carbs, setCarbs] = useState("");
   const [selectedDiningHall, setSelectedDiningHall] = useState("");
   const [date, setDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
-  const [showPopup, setShowPopup] = useState(false); 
+  const [showPopup, setShowPopup] = useState(false);
+  const [meals, setMeals] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleMealPlannerSubmit = (event) => {
+  const handleMealPlannerSubmit = async (event) => {
     event.preventDefault();
-    setShowPopup(true); //for showing pop up without validation
+    setError(null);
+    setLoading(true);
+    setShowPopup(false);
+    setMeals([]);
+
+    // Validate inputs
+    if (!selectedDiningHall || !date || !timeSlot || !calories || !proteins || !carbs) {
+      setError("Please fill in all fields.");
+      setLoading(false);
+      return;
+    }
+
+    // Format the date to YYYY-MM-DD
+    const formattedDate = new Date(date).toISOString().split("T")[0];
+
+    try {
+      console.log("Request Params:", {
+        dining_hall: selectedDiningHall,
+        date: formattedDate,
+        meal: timeSlot,
+        calories: parseInt(calories),
+        total_carbs: parseFloat(carbs),
+        protein: parseFloat(proteins),
+      });
+
+      // Make the API request
+      const response = await axios.get(`http://localhost:8000/api/find_food_combination/`, {
+        params: {
+          dining_hall: selectedDiningHall,
+          date: formattedDate,
+          meal: timeSlot,
+          calories: parseInt(calories),
+          total_carbs: parseFloat(carbs),
+          protein: parseFloat(proteins),
+        },
+      });
+
+      const data = response.data;
+      console.log("API Response:", data);
+
+      if (data.exact_matches) {
+        setMeals(data.exact_matches);
+        setShowPopup(true);
+      } else if (data.closest_combinations) {
+        setMeals(data.closest_combinations);
+        setShowPopup(true);
+      } else {
+        setError("No food combinations found.");
+      }
+    } catch (err) {
+      console.error("API Error:", err.response?.data || err.message);
+      setError(`An error occurred: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClosePopup = () => {
     setShowPopup(false);
+    setMeals([]);
   };
 
   const handleAddToMealPlan = (mealIndex) => {
@@ -44,7 +100,7 @@ const MealPlanner = () => {
 
   return (
     <div className="meal-planner-container">
-      <h2>Search for Meal</h2>
+      <h2>Find Food Combinations</h2>
       <form onSubmit={handleMealPlannerSubmit} className="meal-planner-form">
         <div className="form-group">
           <label>Calories:</label>
@@ -53,6 +109,7 @@ const MealPlanner = () => {
             value={calories}
             onChange={(e) => setCalories(e.target.value)}
             className="input-field"
+            required
           />
         </div>
         <div className="form-group">
@@ -62,15 +119,7 @@ const MealPlanner = () => {
             value={proteins}
             onChange={(e) => setProteins(e.target.value)}
             className="input-field"
-          />
-        </div>
-        <div className="form-group">
-          <label>Fats (g):</label>
-          <input
-            type="number"
-            value={fats}
-            onChange={(e) => setFats(e.target.value)}
-            className="input-field"
+            required
           />
         </div>
         <div className="form-group">
@@ -80,6 +129,7 @@ const MealPlanner = () => {
             value={carbs}
             onChange={(e) => setCarbs(e.target.value)}
             className="input-field"
+            required
           />
         </div>
         <div className="form-group">
@@ -88,6 +138,7 @@ const MealPlanner = () => {
             value={selectedDiningHall}
             onChange={(e) => setSelectedDiningHall(e.target.value)}
             className="select-field"
+            required
           >
             <option value="">Select a dining hall</option>
             {DINING_HALLS.map((hall) => (
@@ -98,12 +149,13 @@ const MealPlanner = () => {
           </select>
         </div>
         <div className="form-group">
-          <label>Date:</label>
+          <label>Date (YYYY-MM-DD):</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="input-field"
+            required
           />
         </div>
         <div className="form-group">
@@ -112,6 +164,7 @@ const MealPlanner = () => {
             value={timeSlot}
             onChange={(e) => setTimeSlot(e.target.value)}
             className="select-field"
+            required
           >
             <option value="">Select a dining time</option>
             {TIME_SLOTS.map((slot) => (
@@ -121,27 +174,37 @@ const MealPlanner = () => {
             ))}
           </select>
         </div>
-        <button type="submit" className="submit-button">Search for Food Item</button>
+        <button type="submit" className="submit-button">
+          {loading ? "Loading..." : "Search for Food Item"}
+        </button>
       </form>
 
-      {/* Pop-up card for displaying mock meal results */}
+      {error && <p className="error-message">{error}</p>}
+
       {showPopup && (
         <div className="popup-card">
           <div className="popup-header">
             <h3>Available Meals</h3>
-            <button onClick={handleClosePopup} className="close-button">X</button>
+            <button onClick={handleClosePopup} className="close-button">
+              X
+            </button>
           </div>
           <div className="popup-content">
             <ul>
-              {[1, 2, 3, 4, 5].map((meal, index) => (
+              {meals.map((meal, index) => (
                 <li key={index} className="meal-item">
                   <p><strong>Meal {index + 1}</strong></p>
-                  <p>Mock Food Item {index + 1}</p>
-                  <p>Calories: 500 kcal</p>
-                  <p>Proteins: 20g</p>
-                  <p>Fats: 15g</p>
-                  <p>Carbs: 60g</p>
-                  <button onClick={() => handleAddToMealPlan(index)} className="add-button">+</button>
+                  {meal.map((item, idx) => (
+                    <div key={idx}>
+                      <p>{item.dish_name}</p>
+                      <p>Calories: {item.calories} kcal</p>
+                      <p>Proteins: {item.protein} g</p>
+                      <p>Carbs: {item.total_carbs} g</p>
+                    </div>
+                  ))}
+                  <button onClick={() => handleAddToMealPlan(index)} className="add-button">
+                    +
+                  </button>
                 </li>
               ))}
             </ul>
