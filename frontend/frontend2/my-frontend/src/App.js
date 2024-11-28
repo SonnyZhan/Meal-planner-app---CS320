@@ -10,6 +10,7 @@ import MealCombinations from "./components/MealCombinations";
 import Card from "./components/Card"; 
 import NavigationBar from "./components/NavigationBar";
 import './App.css';
+import DietaryRestrictions from "./components/DieryRestrictions";
 
 const App = () => {
   const [diningHalls, setDiningHalls] = useState([]);
@@ -65,7 +66,7 @@ const App = () => {
         <Route
           path="/allergy-filter"
           element={
-            isLoggedIn ? <div className="App">Allergy Filter Page Placeholder</div> : <Navigate to="/" />
+            isLoggedIn ? <DietaryRestrictions /> : <Navigate to="/" />
           }
         />
         <Route
