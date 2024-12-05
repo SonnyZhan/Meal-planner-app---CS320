@@ -11,5 +11,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-//branch created
