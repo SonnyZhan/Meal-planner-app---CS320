@@ -24,6 +24,7 @@ const MealPlanner = () => {
   const [selectedDiningHall, setSelectedDiningHall] = useState("");
   const [date, setDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
+  const [prioritize, setPrioritize] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [meals, setMeals] = useState([]);
   const [error, setError] = useState(null);
@@ -54,6 +55,7 @@ const MealPlanner = () => {
         calories: parseInt(calories),
         total_carbs: parseFloat(carbs),
         protein: parseFloat(proteins),
+        prioritize,
       });
 
       // Make the API request
@@ -65,6 +67,7 @@ const MealPlanner = () => {
           calories: parseInt(calories),
           total_carbs: parseFloat(carbs),
           protein: parseFloat(proteins),
+          prioritize,
         },
       });
 
@@ -85,6 +88,15 @@ const MealPlanner = () => {
       setError(`An error occurred: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCheckboxChange = (event) => {
+    const { value, checked } = event.target;
+    if (checked) {
+      setPrioritize((prev) => [...prev, value]);
+    } else {
+      setPrioritize((prev) => prev.filter((item) => item !== value));
     }
   };
 
@@ -173,6 +185,38 @@ const MealPlanner = () => {
               </option>
             ))}
           </select>
+        </div>
+        <div className="form-group">
+          <label>Prioritize:</label>
+          <div className="checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                value="calories"
+                onChange={handleCheckboxChange}
+                checked={prioritize.includes("calories")}
+              />
+              Calories
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value="protein"
+                onChange={handleCheckboxChange}
+                checked={prioritize.includes("protein")}
+              />
+              Proteins
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value="total_carbs"
+                onChange={handleCheckboxChange}
+                checked={prioritize.includes("total_carbs")}
+              />
+              Carbs
+            </label>
+          </div>
         </div>
         <button type="submit" className="submit-button">
           {loading ? "Loading..." : "Search for Food Item"}

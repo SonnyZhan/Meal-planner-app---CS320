@@ -7,6 +7,10 @@ from rest_framework import status
 from .models import Food, Menu, DiningHall
 import datetime
 from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+
 
 @api_view(['GET'])
 def get_all_foods(request):
@@ -102,6 +106,9 @@ def find_food_combination(request):
         target_protein = float(request.GET.get('protein'))
         allergens = request.GET.getlist('allergens')  # List of allergens to exclude
 
+        # Prioritization parameters
+        prioritize = request.GET.getlist('prioritize', [])  # e.g., ['calories', 'protein']
+
         # Parse the date from the input
         menu_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
     except (TypeError, ValueError):
@@ -154,6 +161,12 @@ def find_food_combination(request):
     closest_combinations = []
     closest_diff = float('inf')
 
+    # Assign weights based on prioritization
+    weights = {'calories': 1, 'total_carbs': 1, 'protein': 1}
+    for priority in prioritize:
+        if priority in weights:
+            weights[priority] = 20  # Increase weight for prioritized nutrients
+
     # Iterate through all combinations of three food items
     for combo in combinations(filtered_foods, 3):
         total_calories = sum(item['calories'] for item in combo)
@@ -167,11 +180,11 @@ def find_food_combination(request):
             exact_matches.append(combo)
             continue
 
-        # Calculate the difference from the target values
+        # Calculate the weighted difference from the target values
         diff = (
-            abs(total_calories - target_calories) +
-            abs(total_carbs - target_carbs) +
-            abs(total_protein - target_protein)
+            weights['calories'] * abs(total_calories - target_calories) +
+            weights['total_carbs'] * abs(total_carbs - target_carbs) +
+            weights['protein'] * abs(total_protein - target_protein)
         )
 
         # Store the combination and its difference
@@ -186,3 +199,53 @@ def find_food_combination(request):
     top_5_closest = [combo for combo, diff in closest_combinations[:5]]
 
     return Response({'closest_combinations': top_5_closest}, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def login_view(request):
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    if not email or not password:
+        return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(request, username=email, password=password)
+    if user:
+        login(request, user)
+        return Response({"message": "Login successful."})
+    return Response({"error": "Invalid email or password."}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(["POST"])
+def register_view(request):
+    name = request.data.get("name")
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    if not name or not email or not password:
+        return Response({"error": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(username=email).exists():
+        return Response({"error": "Email is already registered."}, status=status.HTTP_400_BAD_REQUEST)
+
+    User.objects.create_user(username=email, password=password, first_name=name)
+    return Response({"message": "Registration successful."}, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+def get_allergens(request):
+    if not request.user.is_authenticated:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    allergens = request.user.allergens
+    return Response({'allergens': allergens}, status=status.HTTP_200_OK)
+
+@api_view(['PUT'])
+def update_allergens(request):
+    if not request.user.is_authenticated:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    allergens = request.data.get('allergens', [])
+    if not isinstance(allergens, list):
+        return Response({'error': 'Allergens should be a list of strings'}, status=status.HTTP_400_BAD_REQUEST)
+
+    request.user.allergens = allergens
+    request.user.save()
+    return Response({'message': 'Allergens updated successfully'}, status=status.HTTP_200_OK)
