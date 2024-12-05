@@ -1,12 +1,5 @@
 from rest_framework import serializers
-from .models import User, DiningHall, Menu, Food
-
-# User Serializer
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['userID', 'plannerID']
-
+from .models import DiningHall, Menu, Food
 
 # DiningHall Serializer
 class DiningHallSerializer(serializers.ModelSerializer):

@@ -1,79 +1,143 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import Switch from "./Switch";
 
 const Card = ({ onLogin }) => {
-  const [isLogin, setIsLogin] = useState(true); 
-  const navigate = useNavigate();  
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    name: "",
+  });
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault(); 
-    if (isLogin) {
-      onLogin();
-      navigate("/allergy-filter");
-    } else {
-      console.log("Registration Submitted");
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  // Submit form
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Define the API endpoint based on login/register
+    const url = isLogin
+      ? "http://localhost:8000/api/login/"
+      : "http://localhost:8000/api/register/";
+
+    // Prepare the payload
+    const payload = isLogin
+      ? { email: formData.email, password: formData.password }
+      : { name: formData.name, email: formData.email, password: formData.password };
+
+    try {
+      // Make the API request
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"), // CSRF token for Django
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (isLogin) {
+          onLogin(data); // Trigger login success
+          navigate("/allergy-filter"); // Redirect to next page
+        } else {
+          alert("Registration Successful");
+        }
+      } else {
+        // Handle API errors
+        const errorData = await response.json();
+        setError(errorData.message || "An error occurred");
+      }
+    } catch (err) {
+      // Handle request errors
+      setError("An error occurred while submitting the form");
     }
   };
 
+  // Helper to get CSRF token from cookies
+  const getCookie = (name) => {
+    const cookies = document.cookie.split("; ");
+    const cookie = cookies.find((c) => c.startsWith(`${name}=`));
+    return cookie ? cookie.split("=")[1] : null;
+  };
+
+  // Render login form
   const renderLoginForm = () => (
     <>
       <div>Login</div>
-      <label className="form-label" htmlFor="InputEmail1">
+      <label className="form-label" htmlFor="email">
         Email:
       </label>
       <input
         type="email"
         className="form-control"
-        id="InputEmail1"
+        id="email"
         placeholder="Enter your email"
         style={inputStyle}
+        value={formData.email}
+        onChange={handleChange}
       />
-      <label className="form-label" htmlFor="InputPassword1">
+      <label className="form-label" htmlFor="password">
         Password:
       </label>
       <input
         type="password"
         className="form-control"
-        id="InputPassword1"
+        id="password"
         placeholder="Enter your password"
         style={inputStyle}
+        value={formData.password}
+        onChange={handleChange}
       />
     </>
   );
 
+  // Render register form
   const renderRegisterForm = () => (
     <>
       <div>Register</div>
-      <label className="form-label" htmlFor="InputName">
+      <label className="form-label" htmlFor="name">
         Name:
       </label>
       <input
         type="text"
         className="form-control"
-        id="InputName"
+        id="name"
         placeholder="Enter your name"
         style={inputStyle}
+        value={formData.name}
+        onChange={handleChange}
       />
-      <label className="form-label" htmlFor="InputEmail2">
+      <label className="form-label" htmlFor="email">
         Email:
       </label>
       <input
         type="email"
         className="form-control"
-        id="InputEmail2"
+        id="email"
         placeholder="Enter your email"
         style={inputStyle}
+        value={formData.email}
+        onChange={handleChange}
       />
-      <label className="form-label" htmlFor="InputPassword2">
+      <label className="form-label" htmlFor="password">
         Password:
       </label>
       <input
         type="password"
         className="form-control"
-        id="InputPassword2"
+        id="password"
         placeholder="Create a password"
         style={inputStyle}
+        value={formData.password}
+        onChange={handleChange}
       />
     </>
   );
@@ -84,6 +148,7 @@ const Card = ({ onLogin }) => {
         <div className="card-body">
           {isLogin ? renderLoginForm() : renderRegisterForm()}
         </div>
+        {error && <div style={{ color: "red" }}>{error}</div>}
         <button type="submit" className="btn btn-primary" style={buttonStyle}>
           Submit
         </button>
@@ -93,6 +158,7 @@ const Card = ({ onLogin }) => {
   );
 };
 
+// Styling for the card and inputs
 const containerStyle = {
   display: "flex",
   justifyContent: "center",
