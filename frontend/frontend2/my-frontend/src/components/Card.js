@@ -1,33 +1,72 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import Switch from "./Switch";
+import axios from "axios";
 
 const Card = ({ onLogin }) => {
-  const [isLogin, setIsLogin] = useState(true); 
-  const navigate = useNavigate();  
+  const [isLogin, setIsLogin] = useState(true);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault(); 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     if (isLogin) {
-      onLogin();
-      navigate("/allergy-filter");
+      // Login
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/login_user/",
+          {
+            email,  
+            password,
+          }
+        );
+        alert("Login successful!");
+        onLogin(response.data.token); // Save token for authentication
+        navigate("/allergy-filter");
+      } catch (error) {
+        console.error("Login failed:", error.response?.data);
+        alert(error.response?.data?.error || "Invalid email or password");
+      }
     } else {
-      console.log("Registration Submitted");
+      // Registration
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/register_user/",
+          {
+            username,
+            email,
+            password,
+          }
+        );
+        alert("Registration successful!");
+        setIsLogin(true); // Switch to login form after successful registration
+      } catch (error) {
+        console.error("Registration failed:", error.response?.data);
+        alert(
+          error.response?.data?.error ||
+            "Registration failed. Please try again."
+        );
+      }
     }
   };
 
   const renderLoginForm = () => (
     <>
       <div>Login</div>
-      <label className="form-label" htmlFor="InputEmail1">
-        Email:
+      <label className="form-label" htmlFor="InputUsername">
+        Username:
       </label>
       <input
-        type="email"
+        type="text"
         className="form-control"
-        id="InputEmail1"
-        placeholder="Enter your email"
+        id="InputUsername"
+        placeholder="Enter your username"
         style={inputStyle}
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
       />
       <label className="form-label" htmlFor="InputPassword1">
         Password:
@@ -38,6 +77,8 @@ const Card = ({ onLogin }) => {
         id="InputPassword1"
         placeholder="Enter your password"
         style={inputStyle}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
     </>
   );
@@ -45,25 +86,29 @@ const Card = ({ onLogin }) => {
   const renderRegisterForm = () => (
     <>
       <div>Register</div>
-      <label className="form-label" htmlFor="InputName">
-        Name:
+      <label className="form-label" htmlFor="InputUsername">
+        Username:
       </label>
       <input
         type="text"
         className="form-control"
-        id="InputName"
-        placeholder="Enter your name"
+        id="InputUsername"
+        placeholder="Enter your username"
         style={inputStyle}
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
       />
-      <label className="form-label" htmlFor="InputEmail2">
+      <label className="form-label" htmlFor="InputEmail">
         Email:
       </label>
       <input
         type="email"
         className="form-control"
-        id="InputEmail2"
+        id="InputEmail"
         placeholder="Enter your email"
         style={inputStyle}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <label className="form-label" htmlFor="InputPassword2">
         Password:
@@ -74,6 +119,8 @@ const Card = ({ onLogin }) => {
         id="InputPassword2"
         placeholder="Create a password"
         style={inputStyle}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
     </>
   );

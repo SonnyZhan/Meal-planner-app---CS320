@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 from . import views
 
 urlpatterns = [
@@ -10,8 +10,6 @@ urlpatterns = [
     path('create_food/', views.create_food, name='create_food'),
     path('foods/', views.get_all_foods, name='get_all_foods'),  # Endpoint to retrieve all foods
     path('find_food_combination/', views.find_food_combination, name='find_food_combination'),
+    path('register_user/', views.register_user, name='register_user'),
+    path('login_user/', views.login_user, name='login_user'),
 ]
-
-
-
-

@@ -1,12 +1,67 @@
+from email.utils import parsedate
 from django.http import JsonResponse
 import re
 from itertools import combinations
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Food, Menu, DiningHall
+from .models import Food, Menu, DiningHall, User, MealPlanner, Food
 import datetime
 from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from .models import User
+from django.db.utils import IntegrityError
+
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from .serializers import RegisterSerializer
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Allow anyone to access this endpoint
+def register_user(request):
+    """
+    Register a new user and return a token for authentication.
+    """
+    if request.method == 'POST':
+        serializer = RegisterSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.save()  # Save the user instance created by the serializer
+            token, _ = Token.objects.get_or_create(user=user)  # Generate a token for the user
+
+            return Response({
+                "message": "User registered successfully",
+                "token": token.key
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def login_user(request):
+    """
+    API endpoint to authenticate a user.
+    """
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    if not email or not password:
+        return Response({"error": "Both email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(username=email, password=password)
+    if user is not None:
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            "message": "Login successful",
+            "token": token.key
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({"error": "Invalid email or password."}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 @api_view(['GET'])
 def get_all_foods(request):
@@ -186,3 +241,78 @@ def find_food_combination(request):
     top_5_closest = [combo for combo, diff in closest_combinations[:5]]
 
     return Response({'closest_combinations': top_5_closest}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def add_meal_to_planner(request):
+    """
+    API endpoint to add a meal to the MealPlanner.
+    """
+    try:
+        # Parse the request data
+        user_id = request.data.get('user_id')
+        meal_time = request.data.get('meal_time')
+        date = parsedate(request.data.get('date'))
+        dining_hall_name = request.data.get('dining_hall')
+        foods_data = request.data.get('foods', [])
+
+        # Validate user
+        user = User.objects.get(user_id=user_id)
+
+        # Validate dining hall
+        dining_hall = DiningHall.objects.get(name__iexact=dining_hall_name)
+
+        # Create or get the meal planner entry
+        meal_planner, created = MealPlanner.objects.get_or_create(
+            user=user,
+            meal_time=meal_time,
+            date=date,
+            dining_hall=dining_hall,
+        )
+
+        # Link the food items to the meal planner
+        for food_item in foods_data:
+            food, _ = Food.objects.get_or_create(dish_name=food_item['dish_name'])
+            meal_planner.foods.add(food)
+
+        return Response({"message": "Meal successfully added to the planner!"}, status=status.HTTP_201_CREATED)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except DiningHall.DoesNotExist:
+        return Response({"error": "Dining hall not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+def get_meal_planner(request, user_id):
+    """
+    Retrieve all meals from the MealPlanner for a specific user.
+    """
+    try:
+        # Retrieve the user's meal planner
+        meal_plans = MealPlanner.objects.filter(user__user_id=user_id).select_related('dining_hall').prefetch_related('foods')
+
+        # Format the response
+        data = []
+        for plan in meal_plans:
+            foods = plan.foods.all()
+            food_data = [
+                {
+                    "dish_name": food.dish_name,
+                    "calories": food.calories,
+                    "protein": food.protein,
+                    "total_carb": food.total_carb,
+                }
+                for food in foods
+            ]
+
+            data.append({
+                "meal_time": plan.meal_time,
+                "date": plan.date,
+                "dining_hall": plan.dining_hall.name if plan.dining_hall else None,
+                "foods": food_data,
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

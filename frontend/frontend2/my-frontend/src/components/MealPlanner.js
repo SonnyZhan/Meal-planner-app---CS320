@@ -93,11 +93,30 @@ const MealPlanner = () => {
     setMeals([]);
   };
 
-  const handleAddToMealPlan = (mealIndex) => {
-    alert(`Meal ${mealIndex + 1} added to meal planner`);
+  const handleAddToMealPlan = async (mealIndex) => {
+    const meal = meals[mealIndex];
+    const formattedDate = new Date(date).toISOString().split("T")[0];
+  
+    try {
+      await axios.post("http://localhost:8000/api/add_meal_to_planner/", {
+        user_id: 1, // Replace with the actual user's ID
+        meal_time: timeSlot,
+        date: formattedDate,
+        dining_hall: selectedDiningHall,
+        foods: meal.map((food) => ({
+          dish_name: food.dish_name,
+        })),
+      });
+      alert(`Meal ${mealIndex + 1} added to the meal planner`);
+    } catch (error) {
+      console.error("Error adding meal to planner:", error);
+      alert("Failed to add meal. Please try again.");
+    }
     setShowPopup(false);
   };
-
+  
+  
+  
   return (
     <div className="meal-planner-container">
       <h2>Find Food Combinations</h2>
@@ -195,7 +214,7 @@ const MealPlanner = () => {
                 <li key={index} className="meal-item">
                   <p><strong>Meal {index + 1}</strong></p>
                   {meal.map((item, idx) => (
-                    <div key={idx}>
+                    <div className="ingredients" key={idx}>
                       <p>{item.dish_name}</p>
                       <p>Calories: {item.calories} kcal</p>
                       <p>Proteins: {item.protein} g</p>

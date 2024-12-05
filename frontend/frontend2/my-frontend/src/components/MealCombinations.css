@@ -1,0 +1,30 @@
+.meal-combinations-container {
+    padding: 20px;
+  }
+  
+  .meal-combinations-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .meal-combinations-table th,
+  .meal-combinations-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .meal-combinations-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+  }
+  
+  .meal-combinations-table td {
+    vertical-align: top;
+  }
+  
+  .meal-combinations-table td div {
+    margin: 5px 0;
+  }
+  

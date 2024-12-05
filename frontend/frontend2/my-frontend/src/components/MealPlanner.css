@@ -142,3 +142,37 @@ h2 {
 .add-button:hover {
     background-color: #218838;
 }
+
+.ingredients{
+    
+}
+
+.dish-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .meal-planner-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.meal-planner-table th,
+.meal-planner-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.meal-planner-table th {
+  background-color: #f4f4f4;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
