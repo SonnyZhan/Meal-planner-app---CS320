@@ -36,9 +36,10 @@ const DietaryRestrictions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    const token = localStorage.getItem("token"); // Get the token from localStorage
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("User not authenticated");
+      alert("Please log in first.");
       return;
     }
   
@@ -51,14 +52,16 @@ const DietaryRestrictions = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, 
+            Authorization: `Token ${token}`, // Use Token prefix
+            "Content-Type": "application/json",
           },
         }
       );
   
       console.log("Allergens and Dietary Restrictions updated successfully:", response.data);
     } catch (error) {
-      console.error("Error submitting dietary restrictions and allergens:", error);
+      console.error("Error submitting dietary restrictions and allergens:", error.response?.data || error.message);
+      alert(error.response?.data?.error || "An error occurred while submitting the data.");
     }
   };
   
