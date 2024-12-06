@@ -1,16 +1,16 @@
 from django.http import JsonResponse
 import re
 from itertools import combinations
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Food, Menu, DiningHall
+from .models import Food, Menu, DiningHall, allergen, dietaryrestriction
 import datetime
 from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
-
+from rest_framework.permissions import IsAuthenticated
 
 @api_view(['GET'])
 def get_all_foods(request):
@@ -249,3 +249,29 @@ def update_allergens(request):
     request.user.allergens = allergens
     request.user.save()
     return Response({'message': 'Allergens updated successfully'}, status=status.HTTP_200_OK)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])  # Ensure only authenticated users can access
+def update_allergens_and_restrictions(request):
+    # Check if the user is authenticated
+    if not request.user.is_authenticated:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    allergens = request.data.get('allergens', [])
+    restrictions = request.data.get('restrictions', [])
+
+    # Validate input
+    if not isinstance(allergens, list) or not isinstance(restrictions, list):
+        return Response({'error': 'Allergens and restrictions should be lists of strings'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Update allergens
+    allergen_obj, created = allergen.objects.get_or_create(user=request.user)
+    allergen_obj.allergens = allergens
+    allergen_obj.save()
+
+    # Update dietary restrictions
+    dietary_obj, created = dietaryrestriction.objects.get_or_create(user=request.user)
+    dietary_obj.restrictions = restrictions
+    dietary_obj.save()
+
+    return Response({'message': 'Allergens and dietary restrictions updated successfully'}, status=status.HTTP_200_OK)
