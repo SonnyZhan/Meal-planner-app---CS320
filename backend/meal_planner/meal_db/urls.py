@@ -14,6 +14,8 @@ urlpatterns = [
     path("register/", views.register_view, name="register"),
     path('allergens/', views.get_allergens, name='get_allergens'),
     path('allergens/update/', views.update_allergens, name='update_allergens'),
+    path('api/meal_combinations/', views.meal_combinations, name='meal_combinations'),
+    path('api/save_meal/', views.save_meal, name='save_meal'),
 ]
 
 

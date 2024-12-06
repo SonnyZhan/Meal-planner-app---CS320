@@ -1,4 +1,3 @@
-// src/components/MealCombinations.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -25,22 +24,19 @@ const MealCombinations = () => {
       {error && <p style={{ color: "red" }}>{error}</p>}
       {mealCombinations.length > 0 ? (
         <ul>
-          {mealCombinations.map((combination) => (
-            <li key={combination.id}>
-              <strong>Menu ID:</strong> {combination.menu} <br />
-              <strong>Calories:</strong> {combination.calories} kcal <br />
-              <strong>Proteins:</strong> {combination.proteins}g <br />
-              <strong>Fats:</strong> {combination.fats}g <br />
-              <strong>Carbs:</strong> {combination.carbs}g <br />
-              <strong>Foods:</strong>
+          {mealCombinations.map((combination, index) => (
+            <li key={index}>
+              <p><strong>Meal Name:</strong> {combination.meal_name}</p>
+              <p><strong>Total Calories:</strong> {combination.calories} kcal</p>
+              <p><strong>Total Proteins:</strong> {combination.protein} g</p>
+              <p><strong>Total Carbs:</strong> {combination.carbs} g</p>
+              <p><strong>Dishes:</strong></p>
               <ul>
-                {combination.foods.map((food) => (
-                  <li key={food.id}>
-                    {food.name}: {food.calories} kcal, {food.proteins}g proteins, {food.fats}g fats, {food.carbs}g carbs
-                  </li>
+                {combination.dishes.map((dish, idx) => (
+                  <li key={idx}>{dish}</li>
                 ))}
               </ul>
-              <strong>Created At:</strong> {new Date(combination.created_at).toLocaleString()}
+              <p><strong>Saved At:</strong> {new Date(combination.saved_at).toLocaleString()}</p>
             </li>
           ))}
         </ul>

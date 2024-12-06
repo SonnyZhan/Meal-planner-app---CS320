@@ -1,6 +1,17 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 
+class SavedMeal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    meal_name = models.CharField(max_length=255)
+    dishes = models.JSONField()  # Store dishes as JSON
+    calories = models.IntegerField()
+    protein = models.FloatField()
+    carbs = models.FloatField()
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.meal_name} ({self.user.username})"
 
 class DiningHall(models.Model):
     location_id = models.IntegerField(unique=True)

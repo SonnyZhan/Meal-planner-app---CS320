@@ -37,28 +37,15 @@ const MealPlanner = () => {
     setShowPopup(false);
     setMeals([]);
 
-    // Validate inputs
     if (!selectedDiningHall || !date || !timeSlot || !calories || !proteins || !carbs) {
       setError("Please fill in all fields.");
       setLoading(false);
       return;
     }
 
-    // Format the date to YYYY-MM-DD
     const formattedDate = new Date(date).toISOString().split("T")[0];
 
     try {
-      console.log("Request Params:", {
-        dining_hall: selectedDiningHall,
-        date: formattedDate,
-        meal: timeSlot,
-        calories: parseInt(calories),
-        total_carbs: parseFloat(carbs),
-        protein: parseFloat(proteins),
-        prioritize,
-      });
-
-      // Make the API request
       const response = await axios.get(`http://localhost:8000/api/find_food_combination/`, {
         params: {
           dining_hall: selectedDiningHall,
@@ -72,7 +59,6 @@ const MealPlanner = () => {
       });
 
       const data = response.data;
-      console.log("API Response:", data);
 
       if (data.exact_matches) {
         setMeals(data.exact_matches);
@@ -84,7 +70,6 @@ const MealPlanner = () => {
         setError("No food combinations found.");
       }
     } catch (err) {
-      console.error("API Error:", err.response?.data || err.message);
       setError(`An error occurred: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
@@ -93,11 +78,9 @@ const MealPlanner = () => {
 
   const handleCheckboxChange = (event) => {
     const { value, checked } = event.target;
-    if (checked) {
-      setPrioritize((prev) => [...prev, value]);
-    } else {
-      setPrioritize((prev) => prev.filter((item) => item !== value));
-    }
+    setPrioritize((prev) =>
+      checked ? [...prev, value] : prev.filter((item) => item !== value)
+    );
   };
 
   const handleClosePopup = () => {
@@ -105,8 +88,27 @@ const MealPlanner = () => {
     setMeals([]);
   };
 
-  const handleAddToMealPlan = (mealIndex) => {
-    alert(`Meal ${mealIndex + 1} added to meal planner`);
+  const handleAddToMealPlan = async (mealIndex) => {
+    const selectedMeal = meals[mealIndex];
+
+    try {
+      const response = await axios.post("http://localhost:8000/api/save_meal/", {
+        meal: {
+          meal_name: `Meal ${mealIndex + 1}`,
+          dishes: selectedMeal.map((item) => item.dish_name),
+          calories: selectedMeal.reduce((sum, item) => sum + item.calories, 0),
+          protein: selectedMeal.reduce((sum, item) => sum + item.protein, 0),
+          carbs: selectedMeal.reduce((sum, item) => sum + item.total_carbs, 0),
+        },
+      });
+
+      if (response.status === 201) {
+        alert("Meal saved successfully!");
+      }
+    } catch (err) {
+      alert("Failed to save meal. Please try again.");
+    }
+
     setShowPopup(false);
   };
 
@@ -247,7 +249,7 @@ const MealPlanner = () => {
                     </div>
                   ))}
                   <button onClick={() => handleAddToMealPlan(index)} className="add-button">
-                    +
+                    Save Meal
                   </button>
                 </li>
               ))}

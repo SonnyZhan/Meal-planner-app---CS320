@@ -4,7 +4,7 @@ from itertools import combinations
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Food, Menu, DiningHall
+from .models import Food, Menu, DiningHall, SavedMeal
 import datetime
 from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
 from django.contrib.auth import authenticate, login
@@ -249,3 +249,38 @@ def update_allergens(request):
     request.user.allergens = allergens
     request.user.save()
     return Response({'message': 'Allergens updated successfully'}, status=status.HTTP_200_OK)
+
+def save_meal(request):
+    user = request.user
+    meal_data = request.data.get('meal')
+
+    if not user or not meal_data:
+        return Response({'error': 'User or meal data is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        saved_meal = SavedMeal.objects.create(
+            user=user,
+            meal_name=meal_data.get('meal_name', ''),
+            dishes=meal_data.get('dishes', []),
+            calories=meal_data.get('calories', 0),
+            protein=meal_data.get('protein', 0),
+            carbs=meal_data.get('carbs', 0),
+        )
+        return Response({'message': 'Meal saved successfully!'}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+def meal_combinations(request):
+    saved_meals = SavedMeal.objects.filter(user=request.user).order_by('-saved_at')
+    data = [
+        {
+            "meal_name": meal.meal_name,
+            "calories": meal.calories,
+            "protein": meal.protein,
+            "carbs": meal.carbs,
+            "dishes": meal.dishes,
+            "saved_at": meal.saved_at,
+        }
+        for meal in saved_meals
+    ]
+    return Response(data, status=status.HTTP_200_OK)
