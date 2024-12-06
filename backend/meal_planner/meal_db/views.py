@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 import re
+from rest_framework_simplejwt.tokens import RefreshToken
 from itertools import combinations
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -202,17 +203,24 @@ def find_food_combination(request):
 
 @api_view(["POST"])
 def login_view(request):
-    email = request.data.get("email")
-    password = request.data.get("password")
+    email = request.data.get('email')
+    password = request.data.get('password')
 
-    if not email or not password:
-        return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
-
-    user = authenticate(request, username=email, password=password)
-    if user:
-        login(request, user)
-        return Response({"message": "Login successful."})
-    return Response({"error": "Invalid email or password."}, status=status.HTTP_401_UNAUTHORIZED)
+    # Authenticate the user
+    user = authenticate(username=email, password=password)
+    if user is not None:
+        # Generate or retrieve the user's token
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.get_full_name(),
+            },
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(["POST"])
 def register_view(request):
@@ -251,27 +259,28 @@ def update_allergens(request):
     return Response({'message': 'Allergens updated successfully'}, status=status.HTTP_200_OK)
 
 @api_view(['PUT'])
-@permission_classes([IsAuthenticated])  # Ensure only authenticated users can access
+@permission_classes([IsAuthenticated])
 def update_allergens_and_restrictions(request):
-    # Check if the user is authenticated
-    if not request.user.is_authenticated:
+    user = request.user  # TokenAuthentication will populate the user
+    if not user.is_authenticated:
         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     allergens = request.data.get('allergens', [])
     restrictions = request.data.get('restrictions', [])
 
-    # Validate input
     if not isinstance(allergens, list) or not isinstance(restrictions, list):
-        return Response({'error': 'Allergens and restrictions should be lists of strings'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'error': 'Allergens and restrictions should be lists of strings'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # Update allergens
-    allergen_obj, created = allergen.objects.get_or_create(user=request.user)
+    # Update user's allergens and dietary restrictions
+    allergen_obj, created = allergen.objects.get_or_create(user=user)
     allergen_obj.allergens = allergens
     allergen_obj.save()
 
-    # Update dietary restrictions
-    dietary_obj, created = dietaryrestriction.objects.get_or_create(user=request.user)
+    dietary_obj, created = dietaryrestriction.objects.get_or_create(user=user)
     dietary_obj.restrictions = restrictions
     dietary_obj.save()
 
-    return Response({'message': 'Allergens and dietary restrictions updated successfully'}, status=status.HTTP_200_OK)
+    return Response({'message': 'Preferences updated successfully'}, status=status.HTTP_200_OK)
