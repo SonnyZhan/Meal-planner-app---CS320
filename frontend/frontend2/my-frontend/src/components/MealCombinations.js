@@ -1,10 +1,28 @@
 // src/components/MealCombinations.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./MealCombinations.css";
 
 const MealCombinations = () => {
   const [mealCombinations, setMealCombinations] = useState([]);
   const [error, setError] = useState("");
+
+  const generateDates = () => {
+    const today = new Date();
+    return Array.from({ length: 7 }).map((_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() + index);
+      return {
+        day: date.toLocaleDateString("en-US", { weekday: "short" }),
+        date: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+      };
+    });
+  };
+
+  const dates = generateDates();
 
   useEffect(() => {
     axios
@@ -21,32 +39,33 @@ const MealCombinations = () => {
 
   return (
     <div className="MealCombinations">
-      <h2>Saved Meal Combinations</h2>
+      <h2>Meal Planner</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {mealCombinations.length > 0 ? (
-        <ul>
-          {mealCombinations.map((combination) => (
-            <li key={combination.id}>
-              <strong>Menu ID:</strong> {combination.menu} <br />
-              <strong>Calories:</strong> {combination.calories} kcal <br />
-              <strong>Proteins:</strong> {combination.proteins}g <br />
-              <strong>Fats:</strong> {combination.fats}g <br />
-              <strong>Carbs:</strong> {combination.carbs}g <br />
-              <strong>Foods:</strong>
-              <ul>
-                {combination.foods.map((food) => (
-                  <li key={food.id}>
-                    {food.name}: {food.calories} kcal, {food.proteins}g proteins, {food.fats}g fats, {food.carbs}g carbs
-                  </li>
-                ))}
-              </ul>
-              <strong>Created At:</strong> {new Date(combination.created_at).toLocaleString()}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No saved meal combinations found.</p>
-      )}
+      <div className="meal-grid">
+        {/* Row for date headers */}
+        <div className="row-header-placeholder"></div>
+        {dates.map((day, colIndex) => (
+          <div key={colIndex} className="header">
+            <span>{day.day}</span>
+            <br />
+            <span>{day.date}</span>
+          </div>
+        ))}
+
+        {/* Row headers and grid cells */}
+        {["Breakfast", "Lunch", "Dinner"].map((meal, rowIndex) => (
+          <>
+            <div key={`row-${rowIndex}`} className="row-header">
+              {meal}
+            </div>
+            {dates.map((_, colIndex) => (
+              <div key={`cell-${rowIndex}-${colIndex}`} className="meal-cell">
+                <div className="meal-content">Meal Info</div>
+              </div>
+            ))}
+          </>
+        ))}
+      </div>
     </div>
   );
 };
