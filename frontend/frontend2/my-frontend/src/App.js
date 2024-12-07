@@ -10,7 +10,7 @@ import MealCombinations from "./components/MealCombinations";
 import Card from "./components/Card"; 
 import NavigationBar from "./components/NavigationBar";
 import './App.css';
-import DietaryRestrictions from "./components/DieryRestrictions";
+import DietaryRestrictions from "./components/DietaryRestrictions";
 
 const App = () => {
   const [diningHalls, setDiningHalls] = useState([]);

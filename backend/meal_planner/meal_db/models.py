@@ -1,6 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-
+from django.contrib.auth.models import User
 
 class DiningHall(models.Model):
     location_id = models.IntegerField(unique=True)
@@ -50,3 +49,17 @@ class Food(models.Model):
 
     def __str__(self):
         return self.dish_name
+
+class allergen(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  
+    allergens = models.JSONField(default=list)
+
+    def __str__(self):
+        return f"Allergens for {self.user.username}"
+    
+class dietaryrestriction(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  
+    restrictions = models.JSONField(default=list) 
+
+    def __str__(self):
+        return f"Dietary Restrictions for {self.user.username}"

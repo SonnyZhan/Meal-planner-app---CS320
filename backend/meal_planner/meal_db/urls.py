@@ -14,6 +14,7 @@ urlpatterns = [
     path("register/", views.register_view, name="register"),
     path('allergens/', views.get_allergens, name='get_allergens'),
     path('allergens/update/', views.update_allergens, name='update_allergens'),
+    path('update_allergens_and_restrictions/', views.update_allergens_and_restrictions, name='update_allergens_and_restrictions'),
 ]
 
 

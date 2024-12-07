@@ -19,47 +19,50 @@ const Card = ({ onLogin }) => {
 
   // Submit form
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Define the API endpoint based on login/register
-    const url = isLogin
-      ? "http://localhost:8000/api/login/"
-      : "http://localhost:8000/api/register/";
+  // Define the API endpoint based on login/register
+  const url = isLogin
+    ? "http://localhost:8000/api/login/"
+    : "http://localhost:8000/api/register/";
 
-    // Prepare the payload
-    const payload = isLogin
-      ? { email: formData.email, password: formData.password }
-      : { name: formData.name, email: formData.email, password: formData.password };
+  // Prepare the payload
+  const payload = isLogin
+    ? { email: formData.email, password: formData.password }
+    : { name: formData.name, email: formData.email, password: formData.password };
 
-    try {
-      // Make the API request
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"), // CSRF token for Django
-        },
-        body: JSON.stringify(payload),
-      });
+  try {
+    // Make the API request
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), // CSRF token for Django
+      },
+      body: JSON.stringify(payload),
+    });
 
-      if (response.ok) {
+    if (response.ok) {
+
+      if (isLogin) {
+        // Save the token to localStorage
         const data = await response.json();
-        if (isLogin) {
-          onLogin(data); // Trigger login success
-          navigate("/allergy-filter"); // Redirect to next page
-        } else {
-          alert("Registration Successful");
-        }
+        localStorage.setItem("token", data.token); // Assuming `data.token` contains the token
+        onLogin(data); // Trigger login success
+        navigate("/allergy-filter"); // Redirect to next page
       } else {
-        // Handle API errors
-        const errorData = await response.json();
-        setError(errorData.message || "An error occurred");
+        alert("Registration Successful");
       }
-    } catch (err) {
-      // Handle request errors
-      setError("An error occurred while submitting the form");
+    } else {
+      // Handle API errors
+      const errorData = await response.json();
+      setError(errorData.message || "An error occurred");
     }
-  };
+  } catch (err) {
+    // Handle request errors
+    setError("An error occurred while submitting the form");
+  }
+};
 
   // Helper to get CSRF token from cookies
   const getCookie = (name) => {
