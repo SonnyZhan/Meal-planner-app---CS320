@@ -87,3 +87,16 @@ h2 {
     background-color: #f0f0f0;
     border-color: #ddd;
 }
+.delete-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .delete-button:hover {
+    background-color: darkred;
+  }

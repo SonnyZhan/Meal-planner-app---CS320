@@ -63,3 +63,13 @@ class dietaryrestriction(models.Model):
 
     def __str__(self):
         return f"Dietary Restrictions for {self.user.username}"
+
+class UserMealCombination(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
+    food_items = models.ManyToManyField(Food)  # Selected food items for the combination
+    date = models.DateField()  # Meal combination date
+    meal_type = models.CharField(max_length=50)  # Breakfast, Lunch, Dinner
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {self.meal_type}"
