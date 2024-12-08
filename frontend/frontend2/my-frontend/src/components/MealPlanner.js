@@ -36,30 +36,22 @@ const MealPlanner = () => {
     setLoading(true);
     setShowPopup(false);
     setMeals([]);
-
-    // Validate inputs
+  
     if (!selectedDiningHall || !date || !timeSlot || !calories || !proteins || !carbs) {
       setError("Please fill in all fields.");
       setLoading(false);
       return;
     }
-
-    // Format the date to YYYY-MM-DD
+  
     const formattedDate = new Date(date).toISOString().split("T")[0];
-
+  
     try {
-      console.log("Request Params:", {
-        dining_hall: selectedDiningHall,
-        date: formattedDate,
-        meal: timeSlot,
-        calories: parseInt(calories),
-        total_carbs: parseFloat(carbs),
-        protein: parseFloat(proteins),
-        prioritize,
-      });
-
-      // Make the API request
-      const response = await axios.get(`http://localhost:8000/api/find_food_combination/`, {
+      const token = localStorage.getItem("token");
+  
+      const response = await axios.get("http://localhost:8000/api/find_food_combination/", {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
         params: {
           dining_hall: selectedDiningHall,
           date: formattedDate,
@@ -70,10 +62,10 @@ const MealPlanner = () => {
           prioritize,
         },
       });
-
+  
       const data = response.data;
       console.log("API Response:", data);
-
+  
       if (data.exact_matches) {
         setMeals(data.exact_matches);
         setShowPopup(true);
@@ -90,6 +82,7 @@ const MealPlanner = () => {
       setLoading(false);
     }
   };
+  
 
   const handleCheckboxChange = (event) => {
     const { value, checked } = event.target;
@@ -105,9 +98,60 @@ const MealPlanner = () => {
     setMeals([]);
   };
 
-  const handleAddToMealPlan = (mealIndex) => {
-    alert(`Meal ${mealIndex + 1} added to meal planner`);
-    setShowPopup(false);
+  const handleAddToMealPlan = async (mealIndex) => {
+    const token = localStorage.getItem("token");
+    const selectedMeal = meals[mealIndex]; // This is an array of food items.
+  
+    if (!token) {
+      setError("User not authenticated. Please log in.");
+      return;
+    }
+  
+    try {
+      // Extract menu_id from the first food item (assuming all items share the same menu_id)
+      const menuId = selectedMeal[0]?.menu_id;
+  
+      if (!menuId) {
+        console.error("Menu ID is missing in the selected meal.");
+        setError("Failed to retrieve menu information.");
+        return;
+      }
+  
+      const payload = {
+        combinations: [
+          {
+            menu: menuId, // Use the menu ID from the first food item
+            meal_type: timeSlot,
+            date: date,
+            food_items: selectedMeal.map((food) => {
+              if (!food.id) {
+                console.error("Food ID missing:", food); // Log missing ID for debugging
+                throw new Error("Food ID is missing.");
+              }
+              return food.id;
+            }),
+          },
+        ],
+      };
+  
+      console.log("Payload being sent to the backend:", payload);
+  
+      await axios.post(
+        "http://localhost:8000/api/save_user_meal_combinations/",
+        payload,
+        {
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+        }
+      );
+  
+      alert("Meal plan saved successfully!");
+      setShowPopup(false);
+    } catch (err) {
+      console.error("Error saving meal plan:", err.response?.data || err.message);
+      setError("Failed to save meal plan.");
+    }
   };
 
   return (

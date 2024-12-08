@@ -15,6 +15,9 @@ urlpatterns = [
     path('allergens/', views.get_allergens, name='get_allergens'),
     path('allergens/update/', views.update_allergens, name='update_allergens'),
     path('update_allergens_and_restrictions/', views.update_allergens_and_restrictions, name='update_allergens_and_restrictions'),
+    path('user_meal_combinations/', views.get_user_meal_combinations, name='get_user_meal_combinations'),
+    path('save_user_meal_combinations/', views.save_user_meal_combinations, name='save_user_meal_combinations'),
+    path('delete_user_meal_combination/<int:combination_id>/', views.delete_user_meal_combination, name='delete_user_meal_combination'),
 ]
 
 

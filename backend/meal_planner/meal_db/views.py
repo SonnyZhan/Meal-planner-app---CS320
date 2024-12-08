@@ -1,11 +1,10 @@
 from django.http import JsonResponse
 import re
-from rest_framework_simplejwt.tokens import RefreshToken
 from itertools import combinations
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Food, Menu, DiningHall, allergen, dietaryrestriction
+from .models import Food, Menu, DiningHall, allergen, dietaryrestriction, UserMealCombination
 import datetime
 from .serializers import FoodSerializer, MenuSerializer, DiningHallSerializer
 from django.contrib.auth import authenticate, login
@@ -96,7 +95,10 @@ def parse_nutritional_value(value):
         return 0.0
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Ensure only authenticated users can access
 def find_food_combination(request):
+    user = request.user  # Get the authenticated user
+
     # Get input parameters from the request
     try:
         dining_hall_name = request.GET.get('dining_hall')
@@ -105,7 +107,7 @@ def find_food_combination(request):
         target_calories = int(request.GET.get('calories'))
         target_carbs = float(request.GET.get('total_carbs'))
         target_protein = float(request.GET.get('protein'))
-        allergens = request.GET.getlist('allergens')  # List of allergens to exclude
+        extra_allergens = request.GET.getlist('allergens')  # Additional allergens to exclude
 
         # Prioritization parameters
         prioritize = request.GET.getlist('prioritize', [])  # e.g., ['calories', 'protein']
@@ -114,6 +116,20 @@ def find_food_combination(request):
         menu_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
     except (TypeError, ValueError):
         return Response({'error': 'Invalid input parameters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Retrieve the user's saved allergens and dietary restrictions
+    try:
+        user_allergens = allergen.objects.get(user=user).allergens
+    except allergen.DoesNotExist:
+        user_allergens = []
+
+    try:
+        user_dietary_restrictions = dietaryrestriction.objects.get(user=user).restrictions
+    except dietaryrestriction.DoesNotExist:
+        user_dietary_restrictions = []
+
+    # Combine user-saved allergens with additional allergens from the request
+    allergens_to_exclude = set(user_allergens + extra_allergens)
 
     # Retrieve the specified dining hall
     try:
@@ -127,7 +143,7 @@ def find_food_combination(request):
     except Menu.DoesNotExist:
         return Response({'error': 'Menu not found for the specified dining hall, date, and meal'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Get all food items for the menu, excluding items with specified allergens
+    # Get all food items for the menu, excluding items with specified allergens or dietary restrictions
     food_items = Food.objects.filter(menu=menu)
     filtered_foods = []
 
@@ -135,21 +151,26 @@ def find_food_combination(request):
         try:
             # Skip items containing any of the specified allergens
             food_allergens = food.allergens or []
-            if any(allergen in food_allergens for allergen in allergens):
+            if any(allergen in allergens_to_exclude for allergen in food_allergens):
                 continue
 
-            # Directly use the integer value for calories
-            calories = food.calories if food.calories is not None else 0
+            # Skip items that do not comply with the user's dietary restrictions
+            food_diets = food.diets or []
+            if user_dietary_restrictions and not any(diet in user_dietary_restrictions for diet in food_diets):
+                continue
 
-            # Parse nutritional values for total_carbs and protein
+            # Parse nutritional values
+            calories = food.calories if food.calories is not None else 0
             total_carbs = parse_nutritional_value(food.total_carb)
             protein = parse_nutritional_value(food.protein)
 
             filtered_foods.append({
+                'id': food.id,
                 'dish_name': food.dish_name,
                 'calories': calories,
                 'total_carbs': total_carbs,
                 'protein': protein,
+                'menu_id': menu.id,
             })
         except ValueError:
             continue
@@ -200,6 +221,7 @@ def find_food_combination(request):
     top_5_closest = [combo for combo, diff in closest_combinations[:5]]
 
     return Response({'closest_combinations': top_5_closest}, status=status.HTTP_200_OK)
+
 
 @api_view(["POST"])
 def login_view(request):
@@ -284,3 +306,83 @@ def update_allergens_and_restrictions(request):
     dietary_obj.save()
 
     return Response({'message': 'Preferences updated successfully'}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_meal_combinations(request):
+    user = request.user
+    date_range = request.GET.get('date_range', 7)  # Default to next 7 days
+    today = datetime.date.today()
+
+    combinations = UserMealCombination.objects.filter(
+        user=user,
+        date__range=(today, today + datetime.timedelta(days=int(date_range)))
+    ).select_related('menu').prefetch_related('food_items')
+
+    data = []
+    for combination in combinations:
+        data.append({
+            'id': combination.id, 
+            'date': combination.date,
+            'meal_type': combination.meal_type,
+            'menu': combination.menu.id,
+            'food_items': [
+                {
+                    'name': food.dish_name,
+                    'calories': food.calories,
+                    'protein': food.protein,
+                    'carbs': food.total_carb,
+                }
+                for food in combination.food_items.all()
+            ]
+        })
+
+    return Response(data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_user_meal_combinations(request):
+    user = request.user
+    combinations = request.data.get('combinations', [])
+
+    if not isinstance(combinations, list):
+        return Response({'error': 'Invalid data format'}, status=status.HTTP_400_BAD_REQUEST)
+
+    for combo in combinations:
+        menu_id = combo.get('menu')
+        meal_type = combo.get('meal_type')
+        date = combo.get('date')
+        food_ids = combo.get('food_items', [])
+
+        try:
+            menu = Menu.objects.get(id=menu_id)
+            user_combination, created = UserMealCombination.objects.get_or_create(
+                user=user,
+                menu=menu,
+                meal_type=meal_type,
+                date=date
+            )
+            user_combination.food_items.set(Food.objects.filter(id__in=food_ids))
+            user_combination.save()
+        except Menu.DoesNotExist:
+            return Response({'error': f'Menu with ID {menu_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({'message': 'Meal combinations saved successfully'}, status=status.HTTP_200_OK)
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import UserMealCombination
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user_meal_combination(request, combination_id):
+    try:
+        # Fetch the combination by ID and ensure it belongs to the authenticated user
+        combination = UserMealCombination.objects.get(id=combination_id, user=request.user)
+        combination.delete()
+        return Response({'message': 'Meal combination deleted successfully.'}, status=status.HTTP_200_OK)
+    except UserMealCombination.DoesNotExist:
+        return Response({'error': 'Meal combination not found or does not belong to you.'}, status=status.HTTP_404_NOT_FOUND)
