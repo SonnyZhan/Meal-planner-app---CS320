@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
+from .models import allergen, dietaryrestriction
 
 @api_view(['GET'])
 def get_all_foods(request):
@@ -386,3 +387,35 @@ def delete_user_meal_combination(request, combination_id):
         return Response({'message': 'Meal combination deleted successfully.'}, status=status.HTTP_200_OK)
     except UserMealCombination.DoesNotExist:
         return Response({'error': 'Meal combination not found or does not belong to you.'}, status=status.HTTP_404_NOT_FOUND)
+    
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_info(request):
+    user = request.user
+    return Response({
+        "name": user.first_name,
+        "email": user.username,
+    })
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_preferences(request):
+    """Fetch both allergens and dietary restrictions in a single API call."""
+    try:
+        try:
+            user_allergens = allergen.objects.get(user=request.user).allergens
+        except allergen.DoesNotExist:
+            user_allergens = []
+
+        try:
+            user_dietary_restrictions = dietaryrestriction.objects.get(user=request.user).restrictions
+        except dietaryrestriction.DoesNotExist:
+            user_dietary_restrictions = []
+
+        return Response({
+            "allergens": user_allergens,
+            "dietary_restrictions": user_dietary_restrictions,
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

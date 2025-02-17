@@ -5,6 +5,8 @@ import "./MealCombinations.css";
 const UserMealCombinations = () => {
   const [mealCombinations, setMealCombinations] = useState([]);
   const [error, setError] = useState("");
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const generateDates = () => {
     const today = new Date();
@@ -40,12 +42,10 @@ const UserMealCombinations = () => {
         },
       })
       .then((response) => {
-        console.log("API Response:", response.data); // Debugging log
         setMealCombinations(response.data);
         setError("");
       })
       .catch((error) => {
-        console.error("Error fetching user meal combinations:", error);
         setError("An error occurred while fetching your meal combinations.");
       });
   }, []);
@@ -66,9 +66,18 @@ const UserMealCombinations = () => {
 
       alert("Meal combination deleted successfully!");
     } catch (error) {
-      console.error("Error deleting meal combination:", error);
       setError("Failed to delete meal combination.");
     }
+  };
+
+  const handleOpenModal = (mealDetails) => {
+    setSelectedMeal(mealDetails);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedMeal(null);
+    setShowModal(false);
   };
 
   return (
@@ -98,24 +107,12 @@ const UserMealCombinations = () => {
               return (
                 <div key={`cell-${rowIndex}-${colIndex}`} className="meal-cell">
                   {mealsForDayAndType.length > 0 ? (
-                    mealsForDayAndType.map((combo, idx) => (
-                      <div key={idx} className="meal-content">
-                        <button
-                          className="delete-button"
-                          onClick={() => handleDelete(combo.id)}
-                        >
-                          Delete
-                        </button>
-                        {combo.food_items.map((item, itemIdx) => (
-                          <div key={itemIdx}>
-                            <p>{item.name}</p>
-                            <p>Calories: {item.calories} kcal</p>
-                            <p>Proteins: {item.protein} g</p>
-                            <p>Carbs: {item.carbs} g</p>
-                          </div>
-                        ))}
-                      </div>
-                    ))
+                    <button
+                      className="view-meal-button"
+                      onClick={() => handleOpenModal(mealsForDayAndType)}
+                    >
+                      View Meals
+                    </button>
                   ) : (
                     <p>No meals planned</p>
                   )}
@@ -125,6 +122,43 @@ const UserMealCombinations = () => {
           </React.Fragment>
         ))}
       </div>
+
+      {showModal && selectedMeal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Available Meals</h3>
+              <button className="close-button" onClick={handleCloseModal}>
+                X
+              </button>
+            </div>
+            <div className="modal-body">
+              {selectedMeal.map((combo, idx) => (
+                <div key={idx} className="meal-details">
+                  <p><strong>Meal {idx + 1}</strong></p>
+                  {combo.food_items.map((item, itemIdx) => (
+                    <div key={itemIdx} className="food-item">
+                      <p><strong>{item.name}</strong></p>
+                      <p>Calories: {item.calories} kcal</p>
+                      <p>Proteins: {item.protein} g</p>
+                      <p>Carbs: {item.carbs} g</p>
+                    </div>
+                  ))}
+                  <button
+                    className="delete-button"
+                    onClick={() => {
+                      handleDelete(combo.id);
+                      handleCloseModal();
+                    }}
+                  >
+                    Delete Meal
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

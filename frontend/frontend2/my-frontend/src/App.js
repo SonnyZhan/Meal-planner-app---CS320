@@ -11,6 +11,8 @@ import Card from "./components/Card";
 import NavigationBar from "./components/NavigationBar";
 import './App.css';
 import DietaryRestrictions from "./components/DietaryRestrictions";
+import ProfilePage from "./components/ProfilePage";
+
 
 const App = () => {
   const [diningHalls, setDiningHalls] = useState([]);
@@ -79,6 +81,12 @@ const App = () => {
           path="/meal-planner"
           element={
             isLoggedIn ? <MealCombinations /> : <Navigate to="/" />
+          }
+        />
+        <Route
+          path="/profile"  // Added route for Profile Page
+          element={
+            isLoggedIn ? <ProfilePage /> : <Navigate to="/" />
           }
         />
       </Routes>

@@ -16,6 +16,9 @@ const NavigationBar = () => {
       <button onClick={() => navigate('/meal-planner')} className="nav-button">
         Meal Planner
       </button>
+      <button onClick={() => navigate('/profile')} className="nav-button profile-button">
+        Profile
+      </button>
     </div>
   );
 };

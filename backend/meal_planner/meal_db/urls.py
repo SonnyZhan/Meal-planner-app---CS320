@@ -18,6 +18,8 @@ urlpatterns = [
     path('user_meal_combinations/', views.get_user_meal_combinations, name='get_user_meal_combinations'),
     path('save_user_meal_combinations/', views.save_user_meal_combinations, name='save_user_meal_combinations'),
     path('delete_user_meal_combination/<int:combination_id>/', views.delete_user_meal_combination, name='delete_user_meal_combination'),
+    path("user_info/", views.get_user_info, name="get_user_info"),
+    path("user_preferences/", views.get_user_preferences, name="get_user_preferences"),
 ]
 
 

@@ -23,3 +23,15 @@
     background-color: #ff3d3d;
     color: white;
 }
+
+.profile-button {
+    background-color: #000000; 
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+.profile-button:hover {
+    background-color: #939393;
+}
+  
