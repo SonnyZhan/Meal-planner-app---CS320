@@ -1,142 +1,260 @@
-.profile-card {
-  max-width: 800px;
+.profile-container {
+  max-width: 1200px;
   margin: 2rem auto;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  padding: 0 1rem;
 }
 
 .profile-header {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  padding: 2rem;
-  color: white;
   display: flex;
   align-items: center;
   gap: 2rem;
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 1rem;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
 }
 
-.profile-picture {
-  position: relative;
+.profile-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-circle {
   width: 120px;
   height: 120px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  color: white;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s;
 }
 
-.profile-picture img {
+.avatar-circle:hover {
+  transform: scale(1.05);
+}
+
+.profile-image {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  border: 4px solid white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  object-fit: cover;
 }
 
-.profile-status {
+.profile-pic-picker {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  background: #28a745;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  border: 2px solid white;
+  top: 100%;
+  left: 0;
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin-top: 0.5rem;
+  z-index: 10;
+  width: 300px;
 }
 
-.user-info {
-  flex: 1;
+.profile-pic-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
 }
 
-.user-name {
+.profile-pic-option {
+  width: 80px;
+  height: 80px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+  overflow: hidden;
+  padding: 0;
+  background: none;
+}
+
+.profile-pic-option:hover {
+  transform: scale(1.1);
+}
+
+.profile-pic-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+.profile-pic-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-info {
+  flex-grow: 1;
+}
+
+.profile-name {
+  font-size: 2.5rem;
   margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.user-email {
+.profile-email {
+  font-size: 1.1rem;
   margin: 0.5rem 0 0;
   opacity: 0.9;
-  font-size: 1.1rem;
 }
 
-.profile-sections {
-  padding: 2rem;
+.profile-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
 
 .profile-section {
-  background: #f8f9fa;
-  border-radius: 12px;
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin: 0 0 1.5rem;
+  font-weight: 600;
+}
+
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.preference-card {
+  background: #f9fafb;
+  border-radius: 0.75rem;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.section-header {
+.preference-card h3 {
+  color: #4b5563;
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  font-weight: 600;
+}
+
+.preference-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-.section-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 1.3rem;
-}
-
-.section-count {
-  background: #e9ecef;
-  color: #495057;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
+.preference-tag {
+  background: #e5e7eb;
+  color: #4b5563;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
-.section-content {
-  min-height: 100px;
-}
-
-.preferences-list {
-  list-style: none;
-  padding: 0;
+.no-preferences {
+  color: #6b7280;
+  font-style: italic;
   margin: 0;
 }
 
-.preference-item {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
+.nutritional-chart {
+  background: #f9fafb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  min-height: 400px;
 }
 
-.preference-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.preference-icon {
-  font-size: 1.2rem;
-}
-
-.preference-text {
-  color: #444;
-  font-size: 1rem;
-}
-
-.empty-state {
-  color: #6c757d;
+.loading-spinner {
   text-align: center;
   padding: 2rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #ef4444;
+  font-size: 1.1rem;
+  background: #fee2e2;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.color-picker-container {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.color-picker-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.color-picker-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.color-picker {
+  position: absolute;
+  top: 100%;
+  right: 0;
   background: white;
-  border-radius: 8px;
-  font-style: italic;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin-top: 0.5rem;
+  z-index: 10;
+}
+
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.color-option {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option:focus {
+  outline: none;
+  border-color: #1f2937;
 }
 
 @media (max-width: 768px) {
@@ -146,12 +264,11 @@
     padding: 1.5rem;
   }
 
-  .profile-sections {
-    padding: 1rem;
-    grid-template-columns: 1fr;
+  .profile-name {
+    font-size: 2rem;
   }
 
-  .user-name {
-    font-size: 1.5rem;
+  .preferences-grid {
+    grid-template-columns: 1fr;
   }
 }
