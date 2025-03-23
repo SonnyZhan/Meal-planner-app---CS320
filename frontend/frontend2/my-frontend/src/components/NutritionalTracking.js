@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
+import { useState, useEffect } from "react";
+//import { Line } from "react-chartjs-2";
+import {BarChart} from '@mui/x-charts/BarChart';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -165,6 +166,18 @@ const NutritionalTracking = () => {
 
   ]
 */
+
+<BarChart
+  //need to have x-axis be days of the week (found in weeklyData.date)
+  dataset = {weeklyData}
+  xAxis = {[{dataKey : 'date'}]} //idk if this does days of week or what
+  //then we need to have 3 bars for each day (weeklyData.totals.Cal/P/Carbs)
+  series = {[
+    {dataKey : 'totals.calories', label:'Calories'},
+    {dataKey : 'totals.protein', label : 'Protein'},
+    {dataKey : 'totals.carbs', label : 'Carbohydrates'}
+  ]}
+/>
 
 };
 
