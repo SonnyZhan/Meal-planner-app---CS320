@@ -30,6 +30,30 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+//basically the fetchWeeklyData will talk to our backend database (in urls.py in the backend folder)
+//there is a route which calls a method that returns a 2D array in the following format
+// {
+//   'id': combination.id, 
+//   'date': combination.date,
+//   'meal_type': combination.meal_type,
+//   'menu': combination.menu.id,
+//   'food_items': [
+//       {
+//           'name': food.dish_name,
+//           'calories': food.calories,
+//           'protein': food.protein,
+//           'carbs': food.total_carb,
+//       }
+// }
+
+//we can process the raw data got from this method, and using useState, set it to the 
+//weekly data variable
+
+//now the graph isn't working, but theres a better way to represent this data, and also a better library
+//so this branch will attempt to do that
+
+//since this component has a styling sheet, and is called in main componenet, ill just focus on 
+//changing up the graphing library logic and stuff
 
 const NutritionalTracking = () => {
   const [weeklyData, setWeeklyData] = useState([]);
