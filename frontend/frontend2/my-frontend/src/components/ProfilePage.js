@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./ProfilePage.css";
+import NutritionalTracking from "./NutritionalTracking";
 
 const ProfilePage = () => {
   const [user, setUser] = useState({ name: "", email: "" });
@@ -40,54 +41,72 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="profile-container">
-      <h2 className="profile-title">Profile</h2>
+    <div className="container">
+      <div className="card profile-card">
+        <div className="card-content">
+          <div className="profile-header">
+            <div className="profile-picture">
+              <img
+                src="https://www.w3schools.com/howto/img_avatar.png"
+                alt="Default Profile"
+              />
+              <div className="profile-status">Active</div>
+            </div>
+            <div className="user-info">
+              <h2 className="user-name">{user.name}</h2>
+              <p className="user-email">{user.email}</p>
+            </div>
+          </div>
 
-      <div className="profile-section">
-        <div className="profile-picture">
-          <img
-            src="https://www.w3schools.com/howto/img_avatar.png"
-            alt="Default Profile"
-          />
-        </div>
+          <div className="profile-sections">
+            <div className="profile-section">
+              <div className="section-header">
+                <h3>Allergens</h3>
+                <span className="section-count">{allergens.length}</span>
+              </div>
+              <div className="section-content">
+                {allergens.length > 0 ? (
+                  <ul className="preferences-list">
+                    {allergens.map((allergen, index) => (
+                      <li key={index} className="preference-item">
+                        <span className="preference-icon">⚠️</span>
+                        <span className="preference-text">{allergen}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-state">No allergens added.</p>
+                )}
+              </div>
+            </div>
 
-        <div className="user-info">
-          <p>
-            <strong>Name:</strong> {user.name}
-          </p>
-          <p>
-            <strong>Email:</strong> {user.email}
-          </p>
+            <div className="profile-section">
+              <div className="section-header">
+                <h3>Dietary Restrictions</h3>
+                <span className="section-count">
+                  {dietaryRestrictions.length}
+                </span>
+              </div>
+              <div className="section-content">
+                {dietaryRestrictions.length > 0 ? (
+                  <ul className="preferences-list">
+                    {dietaryRestrictions.map((restriction, index) => (
+                      <li key={index} className="preference-item">
+                        <span className="preference-icon">🍽️</span>
+                        <span className="preference-text">{restriction}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-state">No dietary restrictions added.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="preferences-section">
-        <h3>Allergens</h3>
-        <ul className="list">
-          {allergens.length > 0 ? (
-            allergens.map((allergen, index) => (
-              <li key={index} className="list-item">
-                {allergen}
-              </li>
-            ))
-          ) : (
-            <p>No allergens added.</p>
-          )}
-        </ul>
-
-        <h3>Dietary Restrictions</h3>
-        <ul className="list">
-          {dietaryRestrictions.length > 0 ? (
-            dietaryRestrictions.map((restriction, index) => (
-              <li key={index} className="list-item">
-                {restriction}
-              </li>
-            ))
-          ) : (
-            <p>No dietary restrictions added.</p>
-          )}
-        </ul>
-      </div>
+      <NutritionalTracking />
     </div>
   );
 };

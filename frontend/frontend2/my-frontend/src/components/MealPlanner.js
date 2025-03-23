@@ -36,36 +36,46 @@ const MealPlanner = () => {
     setLoading(true);
     setShowPopup(false);
     setMeals([]);
-  
-    if (!selectedDiningHall || !date || !timeSlot || !calories || !proteins || !carbs) {
+
+    if (
+      !selectedDiningHall ||
+      !date ||
+      !timeSlot ||
+      !calories ||
+      !proteins ||
+      !carbs
+    ) {
       setError("Please fill in all fields.");
       setLoading(false);
       return;
     }
-  
+
     const formattedDate = new Date(date).toISOString().split("T")[0];
-  
+
     try {
       const token = localStorage.getItem("token");
-  
-      const response = await axios.get("http://localhost:8000/api/find_food_combination/", {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-        params: {
-          dining_hall: selectedDiningHall,
-          date: formattedDate,
-          meal: timeSlot,
-          calories: parseInt(calories),
-          total_carbs: parseFloat(carbs),
-          protein: parseFloat(proteins),
-          prioritize,
-        },
-      });
-  
+
+      const response = await axios.get(
+        "http://localhost:8000/api/find_food_combination/",
+        {
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+          params: {
+            dining_hall: selectedDiningHall,
+            date: formattedDate,
+            meal: timeSlot,
+            calories: parseInt(calories),
+            total_carbs: parseFloat(carbs),
+            protein: parseFloat(proteins),
+            prioritize,
+          },
+        }
+      );
+
       const data = response.data;
       console.log("API Response:", data);
-  
+
       if (data.exact_matches) {
         setMeals(data.exact_matches);
         setShowPopup(true);
@@ -77,12 +87,13 @@ const MealPlanner = () => {
       }
     } catch (err) {
       console.error("API Error:", err.response?.data || err.message);
-      setError(`An error occurred: ${err.response?.data?.error || err.message}`);
+      setError(
+        `An error occurred: ${err.response?.data?.error || err.message}`
+      );
     } finally {
       setLoading(false);
     }
   };
-  
 
   const handleCheckboxChange = (event) => {
     const { value, checked } = event.target;
@@ -100,42 +111,33 @@ const MealPlanner = () => {
 
   const handleAddToMealPlan = async (mealIndex) => {
     const token = localStorage.getItem("token");
-    const selectedMeal = meals[mealIndex]; // This is an array of food items.
-  
+    const selectedMeal = meals[mealIndex];
+
     if (!token) {
       setError("User not authenticated. Please log in.");
       return;
     }
-  
+
     try {
-      // Extract menu_id from the first food item (assuming all items share the same menu_id)
       const menuId = selectedMeal[0]?.menu_id;
-  
+
       if (!menuId) {
         console.error("Menu ID is missing in the selected meal.");
         setError("Failed to retrieve menu information.");
         return;
       }
-  
+
       const payload = {
         combinations: [
           {
-            menu: menuId, // Use the menu ID from the first food item
+            menu: menuId,
             meal_type: timeSlot,
             date: date,
-            food_items: selectedMeal.map((food) => {
-              if (!food.id) {
-                console.error("Food ID missing:", food); // Log missing ID for debugging
-                throw new Error("Food ID is missing.");
-              }
-              return food.id;
-            }),
+            food_items: selectedMeal.map((food) => food.id),
           },
         ],
       };
-  
-      console.log("Payload being sent to the backend:", payload);
-  
+
       await axios.post(
         "http://localhost:8000/api/save_user_meal_combinations/",
         payload,
@@ -145,157 +147,185 @@ const MealPlanner = () => {
           },
         }
       );
-  
+
       alert("Meal plan saved successfully!");
       setShowPopup(false);
     } catch (err) {
-      console.error("Error saving meal plan:", err.response?.data || err.message);
+      console.error(
+        "Error saving meal plan:",
+        err.response?.data || err.message
+      );
       setError("Failed to save meal plan.");
     }
   };
 
   return (
-    <div className="meal-planner-container">
-      <h2>Find Food Combinations</h2>
-      <form onSubmit={handleMealPlannerSubmit} className="meal-planner-form">
-        <div className="form-group">
-          <label>Calories:</label>
-          <input
-            type="number"
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Proteins (g):</label>
-          <input
-            type="number"
-            value={proteins}
-            onChange={(e) => setProteins(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Carbs (g):</label>
-          <input
-            type="number"
-            value={carbs}
-            onChange={(e) => setCarbs(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Select Dining Hall:</label>
-          <select
-            value={selectedDiningHall}
-            onChange={(e) => setSelectedDiningHall(e.target.value)}
-            className="select-field"
-            required
-          >
-            <option value="">Select a dining hall</option>
-            {DINING_HALLS.map((hall) => (
-              <option key={hall.value} value={hall.value}>
-                {hall.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Date (YYYY-MM-DD):</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Dining Time:</label>
-          <select
-            value={timeSlot}
-            onChange={(e) => setTimeSlot(e.target.value)}
-            className="select-field"
-            required
-          >
-            <option value="">Select a dining time</option>
-            {TIME_SLOTS.map((slot) => (
-              <option key={slot.value} value={slot.value}>
-                {slot.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Prioritize:</label>
-          <div className="checkbox-group">
-            <label>
-              <input
-                type="checkbox"
-                value="calories"
-                onChange={handleCheckboxChange}
-                checked={prioritize.includes("calories")}
-              />
-              Calories
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="protein"
-                onChange={handleCheckboxChange}
-                checked={prioritize.includes("protein")}
-              />
-              Proteins
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="total_carbs"
-                onChange={handleCheckboxChange}
-                checked={prioritize.includes("total_carbs")}
-              />
-              Carbs
-            </label>
-          </div>
-        </div>
-        <button type="submit" className="submit-button">
-          {loading ? "Loading..." : "Search for Food Item"}
-        </button>
-      </form>
+    <div className="container">
+      <div className="card">
+        <div className="card-content">
+          <h2 className="card-title">Find Food Combinations</h2>
+          <form onSubmit={handleMealPlannerSubmit}>
+            <div className="form-group">
+              <div className="form-control">
+                <label>Calories:</label>
+                <input
+                  type="number"
+                  value={calories}
+                  onChange={(e) => setCalories(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
 
-      {error && <p className="error-message">{error}</p>}
+              <div className="form-control">
+                <label>Proteins (g):</label>
+                <input
+                  type="number"
+                  value={proteins}
+                  onChange={(e) => setProteins(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div className="form-control">
+                <label>Carbs (g):</label>
+                <input
+                  type="number"
+                  value={carbs}
+                  onChange={(e) => setCarbs(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div className="form-control">
+                <label>Select Dining Hall:</label>
+                <select
+                  value={selectedDiningHall}
+                  onChange={(e) => setSelectedDiningHall(e.target.value)}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select a dining hall</option>
+                  {DINING_HALLS.map((hall) => (
+                    <option key={hall.value} value={hall.value}>
+                      {hall.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label>Date:</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div className="form-control">
+                <label>Dining Time:</label>
+                <select
+                  value={timeSlot}
+                  onChange={(e) => setTimeSlot(e.target.value)}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select a dining time</option>
+                  {TIME_SLOTS.map((slot) => (
+                    <option key={slot.value} value={slot.value}>
+                      {slot.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label>Prioritize:</label>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      value="calories"
+                      onChange={handleCheckboxChange}
+                      checked={prioritize.includes("calories")}
+                      className="checkbox"
+                    />
+                    <span>Calories</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      value="protein"
+                      onChange={handleCheckboxChange}
+                      checked={prioritize.includes("protein")}
+                      className="checkbox"
+                    />
+                    <span>Proteins</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      value="total_carbs"
+                      onChange={handleCheckboxChange}
+                      checked={prioritize.includes("total_carbs")}
+                      className="checkbox"
+                    />
+                    <span>Carbs</span>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary">
+                {loading ? "Loading..." : "Search for Food Item"}
+              </button>
+            </div>
+          </form>
+
+          {error && <div className="error-message">{error}</div>}
+        </div>
+      </div>
 
       {showPopup && (
-        <div className="popup-card">
-          <div className="popup-header">
-            <h3>Available Meals</h3>
-            <button onClick={handleClosePopup} className="close-button">
-              X
-            </button>
-          </div>
-          <div className="popup-content">
-            <ul>
-              {meals.map((meal, index) => (
-                <li key={index} className="meal-item">
-                  <p><strong>Meal {index + 1}</strong></p>
-                  {meal.map((item, idx) => (
-                    <div key={idx}>
-                      <p>{item.dish_name}</p>
-                      <p>Calories: {item.calories} kcal</p>
-                      <p>Proteins: {item.protein} g</p>
-                      <p>Carbs: {item.total_carbs} g</p>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Recommended Meals</h3>
+              <button onClick={handleClosePopup} className="close-button">
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="meals-grid">
+                {meals.map((meal, index) => (
+                  <div key={index} className="meal-card">
+                    <h4>Option {index + 1}</h4>
+                    <div className="meal-items">
+                      {meal.map((item, idx) => (
+                        <div key={idx} className="food-item">
+                          <h5>{item.dish_name}</h5>
+                          <div className="nutrition-info">
+                            <span>Calories: {item.calories} kcal</span>
+                            <span>Proteins: {item.protein} g</span>
+                            <span>Carbs: {item.total_carbs} g</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  <button onClick={() => handleAddToMealPlan(index)} className="add-button">
-                    +
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    <button
+                      onClick={() => handleAddToMealPlan(index)}
+                      className="add-button"
+                    >
+                      Add to Meal Plan
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Switch from "./Switch";
 
 const Card = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,50 +18,55 @@ const Card = ({ onLogin }) => {
 
   // Submit form
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Define the API endpoint based on login/register
-  const url = isLogin
-    ? "http://localhost:8000/api/login/"
-    : "http://localhost:8000/api/register/";
+    // Define the API endpoint based on login/register
+    const url = isLogin
+      ? "http://localhost:8000/api/login/"
+      : "http://localhost:8000/api/register/";
 
-  // Prepare the payload
-  const payload = isLogin
-    ? { email: formData.email, password: formData.password }
-    : { name: formData.name, email: formData.email, password: formData.password };
+    // Prepare the payload
+    const payload = isLogin
+      ? { email: formData.email, password: formData.password }
+      : {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        };
 
-  try {
-    // Make the API request
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"), // CSRF token for Django
-      },
-      body: JSON.stringify(payload),
-    });
+    try {
+      // Make the API request
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"), // CSRF token for Django
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (response.ok) {
-
-      if (isLogin) {
-        // Save the token to localStorage
-        const data = await response.json();
-        localStorage.setItem("token", data.token); // Assuming `data.token` contains the token
-        onLogin(data); // Trigger login success
-        navigate("/allergy-filter"); // Redirect to next page
+      if (response.ok) {
+        if (isLogin) {
+          // Save the token to localStorage
+          const data = await response.json();
+          localStorage.setItem("token", data.token); // Assuming `data.token` contains the token
+          onLogin(data); // Trigger login success
+          navigate("/allergy-filter"); // Redirect to next page
+        } else {
+          showToast("Registration Successful", "success");
+        }
       } else {
-        alert("Registration Successful");
+        // Handle API errors
+        const errorData = await response.json();
+        setError(errorData.message || "An error occurred");
+        showToast(errorData.message || "An error occurred", "error");
       }
-    } else {
-      // Handle API errors
-      const errorData = await response.json();
-      setError(errorData.message || "An error occurred");
+    } catch (err) {
+      // Handle request errors
+      setError("An error occurred while submitting the form");
+      showToast("An error occurred while submitting the form", "error");
     }
-  } catch (err) {
-    // Handle request errors
-    setError("An error occurred while submitting the form");
-  }
-};
+  };
 
   // Helper to get CSRF token from cookies
   const getCookie = (name) => {
@@ -71,131 +75,98 @@ const Card = ({ onLogin }) => {
     return cookie ? cookie.split("=")[1] : null;
   };
 
-  // Render login form
-  const renderLoginForm = () => (
-    <>
-      <div>Login</div>
-      <label className="form-label" htmlFor="email">
-        Email:
-      </label>
-      <input
-        type="email"
-        className="form-control"
-        id="email"
-        placeholder="Enter your email"
-        style={inputStyle}
-        value={formData.email}
-        onChange={handleChange}
-      />
-      <label className="form-label" htmlFor="password">
-        Password:
-      </label>
-      <input
-        type="password"
-        className="form-control"
-        id="password"
-        placeholder="Enter your password"
-        style={inputStyle}
-        value={formData.password}
-        onChange={handleChange}
-      />
-    </>
-  );
-
-  // Render register form
-  const renderRegisterForm = () => (
-    <>
-      <div>Register</div>
-      <label className="form-label" htmlFor="name">
-        Name:
-      </label>
-      <input
-        type="text"
-        className="form-control"
-        id="name"
-        placeholder="Enter your name"
-        style={inputStyle}
-        value={formData.name}
-        onChange={handleChange}
-      />
-      <label className="form-label" htmlFor="email">
-        Email:
-      </label>
-      <input
-        type="email"
-        className="form-control"
-        id="email"
-        placeholder="Enter your email"
-        style={inputStyle}
-        value={formData.email}
-        onChange={handleChange}
-      />
-      <label className="form-label" htmlFor="password">
-        Password:
-      </label>
-      <input
-        type="password"
-        className="form-control"
-        id="password"
-        placeholder="Create a password"
-        style={inputStyle}
-        value={formData.password}
-        onChange={handleChange}
-      />
-    </>
-  );
+  // Helper to show toast notifications
+  const showToast = (message, type) => {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  };
 
   return (
-    <div style={containerStyle}>
-      <form className="card" style={formStyle} onSubmit={handleSubmit}>
-        <div className="card-body">
-          {isLogin ? renderLoginForm() : renderRegisterForm()}
+    <div className="container">
+      <div className="card">
+        <div className="card-content">
+          <h2 className="card-title">
+            {isLogin ? "Welcome Back" : "Create Account"}
+          </h2>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              {!isLogin && (
+                <div className="form-control">
+                  <label htmlFor="name" className="form-label">
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your name"
+                    className="input-field"
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="form-control">
+                <label htmlFor="email" className="form-label">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div className="form-control">
+                <label htmlFor="password" className="form-label">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder={
+                    isLogin ? "Enter your password" : "Create a password"
+                  }
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn-primary">
+                {isLogin ? "Login" : "Register"}
+              </button>
+            </div>
+          </form>
+
+          <div className="switch-container">
+            <span>Login</span>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={!isLogin}
+                onChange={() => setIsLogin(!isLogin)}
+              />
+              <span className="slider"></span>
+            </label>
+            <span>Register</span>
+          </div>
         </div>
-        {error && <div style={{ color: "red" }}>{error}</div>}
-        <button type="submit" className="btn btn-primary" style={buttonStyle}>
-          Submit
-        </button>
-        <Switch isToggled={!isLogin} onToggle={() => setIsLogin(!isLogin)} />
-      </form>
+      </div>
     </div>
   );
-};
-
-// Styling for the card and inputs
-const containerStyle = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  height: "100vh",
-  backgroundColor: "#FFA500",
-};
-
-const formStyle = {
-  width: "400px",
-  height: "500px",
-  padding: "20px",
-  backgroundColor: "#FF6347",
-  borderRadius: "15px",
-  display: "flex",
-  justifyContent: "center",
-  flexDirection: "column",
-  alignItems: "center",
-};
-
-const inputStyle = {
-  borderRadius: "5px",
-  padding: "10px",
-  display: "flex",
-  width: "300px",
-  marginBottom: "10%",
-};
-
-const buttonStyle = {
-  width: "25%",
-  height: "10%",
-  borderRadius: "5px",
-  marginTop: "10%",
-  alignContent: "center",
 };
 
 export default Card;

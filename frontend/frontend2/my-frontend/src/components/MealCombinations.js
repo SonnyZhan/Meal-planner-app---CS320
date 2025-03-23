@@ -13,7 +13,9 @@ const UserMealCombinations = () => {
     return Array.from({ length: 7 }).map((_, index) => {
       const date = new Date(today);
       date.setDate(today.getDate() + index);
-      const formattedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      const formattedDate = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60000
+      )
         .toISOString()
         .split("T")[0];
       return {
@@ -54,11 +56,14 @@ const UserMealCombinations = () => {
     const token = localStorage.getItem("token");
 
     try {
-      await axios.delete(`http://localhost:8000/api/delete_user_meal_combination/${combinationId}/`, {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      });
+      await axios.delete(
+        `http://localhost:8000/api/delete_user_meal_combination/${combinationId}/`,
+        {
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+        }
+      );
 
       setMealCombinations((prevCombinations) =>
         prevCombinations.filter((combo) => combo.id !== combinationId)
@@ -83,13 +88,12 @@ const UserMealCombinations = () => {
   return (
     <div className="MealCombinations">
       <h2>Your Meal Planner</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <div className="error-message">{error}</div>}
       <div className="meal-grid">
         <div className="row-header-placeholder"></div>
         {dates.map((day, colIndex) => (
           <div key={colIndex} className="header">
             <span>{day.day}</span>
-            <br />
             <span>{day.date}</span>
           </div>
         ))}
@@ -129,16 +133,20 @@ const UserMealCombinations = () => {
             <div className="modal-header">
               <h3>Available Meals</h3>
               <button className="close-button" onClick={handleCloseModal}>
-                X
+                ×
               </button>
             </div>
             <div className="modal-body">
               {selectedMeal.map((combo, idx) => (
                 <div key={idx} className="meal-details">
-                  <p><strong>Meal {idx + 1}</strong></p>
+                  <p>
+                    <strong>Meal {idx + 1}</strong>
+                  </p>
                   {combo.food_items.map((item, itemIdx) => (
                     <div key={itemIdx} className="food-item">
-                      <p><strong>{item.name}</strong></p>
+                      <p>
+                        <strong>{item.name}</strong>
+                      </p>
                       <p>Calories: {item.calories} kcal</p>
                       <p>Proteins: {item.protein} g</p>
                       <p>Carbs: {item.carbs} g</p>

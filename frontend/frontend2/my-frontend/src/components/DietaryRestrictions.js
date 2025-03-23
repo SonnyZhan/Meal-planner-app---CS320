@@ -1,48 +1,62 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./DietaryRestrictions.css";
 
 const DietaryRestrictions = () => {
   const [selectedRestrictions, setSelectedRestrictions] = useState([]);
   const [selectedAllergens, setSelectedAllergens] = useState([]);
 
   const dietaryOptions = [
-    "Vegetarian", "Vegan", "Gluten Free", "Dairy Free", "Halal", "Kosher"
+    "Vegetarian",
+    "Vegan",
+    "Gluten Free",
+    "Dairy Free",
+    "Halal",
+    "Kosher",
   ];
 
   const allergenOptions = [
-    "Nut Allergy", "Shellfish Allergy", "Dairy Allergy", "Egg Allergy", "Peanut Allergy"
+    "Nut Allergy",
+    "Shellfish Allergy",
+    "Dairy Allergy",
+    "Egg Allergy",
+    "Peanut Allergy",
   ];
 
-  // Handle change for dietary restrictions checkboxes
-  const handleRestrictionChange = (option) => {
-    if (selectedRestrictions.includes(option)) {
-      setSelectedRestrictions(selectedRestrictions.filter((item) => item !== option));
-    } else {
-      setSelectedRestrictions([...selectedRestrictions, option]);
-    }
+  const handleRestrictionChange = (value) => {
+    setSelectedRestrictions((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
   };
 
-  // Handle change for allergen checkboxes
-  const handleAllergenChange = (option) => {
-    if (selectedAllergens.includes(option)) {
-      setSelectedAllergens(selectedAllergens.filter((item) => item !== option));
-    } else {
-      setSelectedAllergens([...selectedAllergens, option]);
-    }
+  const handleAllergenChange = (value) => {
+    setSelectedAllergens((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
   };
 
-  // Handle form submission to send the dietary restrictions and allergens to the backend
+  const showToast = (message, type) => {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("User not authenticated");
-      alert("Please log in first.");
+      showToast("Please log in first.", "error");
       return;
     }
-  
+
     try {
       const response = await axios.put(
         "http://localhost:8000/api/update_allergens_and_restrictions/",
@@ -52,59 +66,73 @@ const DietaryRestrictions = () => {
         },
         {
           headers: {
-            Authorization: `Token ${token}`, // Use Token prefix
+            Authorization: `Token ${token}`,
             "Content-Type": "application/json",
           },
         }
       );
-  
-      console.log("Allergens and Dietary Restrictions updated successfully:", response.data);
+
+      showToast("Your dietary preferences have been updated.", "success");
     } catch (error) {
-      console.error("Error submitting dietary restrictions and allergens:", error.response?.data || error.message);
-      alert(error.response?.data?.error || "An error occurred while submitting the data.");
+      showToast(
+        error.response?.data?.error ||
+          "An error occurred while submitting the data.",
+        "error"
+      );
     }
   };
-  
 
   return (
     <div className="container">
-      <form className="form" onSubmit={handleSubmit}>
-        <h2 className="form-title">Select Your Dietary Restrictions</h2>
-        <div className="checkbox-container">
-          {dietaryOptions.map((option) => (
-            <label key={option} className="checkbox-label">
-              <input
-                type="checkbox"
-                value={option}
-                checked={selectedRestrictions.includes(option)}
-                onChange={() => handleRestrictionChange(option)}
-                className="checkbox"
-              />
-              {option}
-            </label>
-          ))}
-        </div>
+      <div className="card">
+        <div className="card-content">
+          <h2 className="card-title">Dietary Preferences</h2>
 
-        <h2 className="form-title">Select Your Allergens</h2>
-        <div className="checkbox-container">
-          {allergenOptions.map((option) => (
-            <label key={option} className="checkbox-label">
-              <input
-                type="checkbox"
-                value={option}
-                checked={selectedAllergens.includes(option)}
-                onChange={() => handleAllergenChange(option)}
-                className="checkbox"
-              />
-              {option}
-            </label>
-          ))}
-        </div>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <div className="section">
+                <h3 className="section-title">Dietary Restrictions</h3>
+                <div className="checkbox-group">
+                  {dietaryOptions.map((option) => (
+                    <label key={option} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={selectedRestrictions.includes(option)}
+                        onChange={() => handleRestrictionChange(option)}
+                        className="checkbox"
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-        <button type="submit" className="submit-button">
-          Submit
-        </button>
-      </form>
+              <div className="divider"></div>
+
+              <div className="section">
+                <h3 className="section-title">Allergens</h3>
+                <div className="checkbox-group">
+                  {allergenOptions.map((option) => (
+                    <label key={option} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={selectedAllergens.includes(option)}
+                        onChange={() => handleAllergenChange(option)}
+                        className="checkbox"
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary">
+                Save Preferences
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

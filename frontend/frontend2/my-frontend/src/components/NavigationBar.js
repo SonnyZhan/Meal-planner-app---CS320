@@ -1,25 +1,33 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import './NavigationBar.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const NavigationBar = () => {
   const navigate = useNavigate();
 
+  const navItems = [
+    { label: "Allergy Filter", path: "/allergy-filter" },
+    { label: "Search Food", path: "/search-food" },
+    { label: "Meal Planner", path: "/meal-planner" },
+    { label: "Profile", path: "/profile" },
+  ];
+
   return (
-    <div className="navigation-bar">
-      <button onClick={() => navigate('/allergy-filter')} className="nav-button">
-        Allergy Filter
-      </button>
-      <button onClick={() => navigate('/search-food')} className="nav-button">
-        Search Food
-      </button>
-      <button onClick={() => navigate('/meal-planner')} className="nav-button">
-        Meal Planner
-      </button>
-      <button onClick={() => navigate('/profile')} className="nav-button profile-button">
-        Profile
-      </button>
-    </div>
+    <nav className="nav">
+      <div className="nav-container">
+        <div className="nav-brand">UMass Meal Planner</div>
+        <div className="nav-links">
+          {navItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className="nav-link"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </nav>
   );
 };
 

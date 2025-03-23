@@ -6,6 +6,16 @@ const DiningHallForm = ({ onDiningHallCreated }) => {
   const [diningHallName, setDiningHallName] = useState("");
   const [showForm, setShowForm] = useState(false);
 
+  const showToast = (message, type) => {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  };
+
   const handleDiningHallSubmit = (event) => {
     event.preventDefault();
 
@@ -17,29 +27,40 @@ const DiningHallForm = ({ onDiningHallCreated }) => {
         onDiningHallCreated();
         setDiningHallName("");
         setShowForm(false);
+        showToast("Dining hall created successfully", "success");
       })
-      .catch((error) => console.error("Error creating dining hall:", error));
+      .catch((error) => {
+        console.error("Error creating dining hall:", error);
+        showToast("Failed to create dining hall", "error");
+      });
   };
 
   return (
-    <div className="DiningHallForm">
-      <button onClick={() => setShowForm(!showForm)}>
+    <div className="dining-hall-form">
+      <button onClick={() => setShowForm(!showForm)} className="btn-primary">
         {showForm ? "Cancel" : "Add New Dining Hall"}
       </button>
 
       {showForm && (
-        <form onSubmit={handleDiningHallSubmit}>
-          <h2>Create New Dining Hall</h2>
-          <div>
-            <label>Name:</label>
+        <form onSubmit={handleDiningHallSubmit} className="form-group">
+          <h3 className="section-title">Create New Dining Hall</h3>
+          <div className="form-control">
+            <label htmlFor="diningHallName" className="form-label">
+              Name:
+            </label>
             <input
+              id="diningHallName"
               type="text"
               value={diningHallName}
               onChange={(e) => setDiningHallName(e.target.value)}
+              placeholder="Enter dining hall name"
+              className="input-field"
               required
             />
           </div>
-          <button type="submit">Save Dining Hall</button>
+          <button type="submit" className="btn-primary">
+            Save Dining Hall
+          </button>
         </form>
       )}
     </div>
