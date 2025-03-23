@@ -127,9 +127,9 @@ const NutritionalTracking = () => {
       const totals = dayData.reduce(
         (acc, meal) => {
           meal.food_items.forEach((item) => {
-            acc.calories += item.calories || 0;
-            acc.protein += parseFloat(item.protein) || 0;
-            acc.carbs += parseFloat(item.carbs) || 0;
+            acc.calories += item.calories ? item.calories : 0;
+            acc.protein += parseFloat(item.protein) ? parseFloat(item.protein) : 0;
+            acc.carbs += parseFloat(item.carbs)? parseFloat(item.carbs) : 0;
           });
           return acc;
         },
