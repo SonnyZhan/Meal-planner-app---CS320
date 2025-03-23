@@ -17,6 +17,7 @@ import NavigationBar from "./components/NavigationBar";
 import "./App.css";
 import DietaryRestrictions from "./components/DietaryRestrictions";
 import ProfilePage from "./components/ProfilePage";
+import LandingPage from "./components/LandingPage";
 
 const App = () => {
   const [diningHalls, setDiningHalls] = useState([]);
@@ -65,8 +66,9 @@ const App = () => {
         {isLoggedIn && <NavigationBar />}
         <div className="main-content">
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route
-              path="/"
+              path="/login"
               element={
                 isLoggedIn ? (
                   <Navigate to="/allergy-filter" />
@@ -78,22 +80,28 @@ const App = () => {
             <Route
               path="/allergy-filter"
               element={
-                isLoggedIn ? <DietaryRestrictions /> : <Navigate to="/" />
+                isLoggedIn ? <DietaryRestrictions /> : <Navigate to="/login" />
               }
             />
             <Route
               path="/search-food"
               element={
-                isLoggedIn ? <MealPlanner menus={menus} /> : <Navigate to="/" />
+                isLoggedIn ? (
+                  <MealPlanner menus={menus} />
+                ) : (
+                  <Navigate to="/login" />
+                )
               }
             />
             <Route
               path="/meal-planner"
-              element={isLoggedIn ? <MealCombinations /> : <Navigate to="/" />}
+              element={
+                isLoggedIn ? <MealCombinations /> : <Navigate to="/login" />
+              }
             />
             <Route
               path="/profile"
-              element={isLoggedIn ? <ProfilePage /> : <Navigate to="/" />}
+              element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" />}
             />
           </Routes>
         </div>
