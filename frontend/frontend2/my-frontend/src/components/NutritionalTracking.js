@@ -143,7 +143,28 @@ const NutritionalTracking = () => {
     });
   };
 
-//so i will use the weekly data array to represent a bar graph 
+//so i will use the weekly data array to represent a bar graph
+/*
+  weeklyData = [
+    {
+      date: some formate, idk ask sonny,
+      totals : {
+                  calories: ,
+                  protein: ,
+                  carbs: 
+               }
+    },
+    {
+      date: some formate, idk ask sonny,
+      totals : {
+                  calories: ,
+                  protein: ,
+                  carbs: 
+               }
+    },
+
+  ]
+*/
 
 };
 
