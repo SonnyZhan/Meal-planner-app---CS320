@@ -128,9 +128,9 @@ const NutritionalTracking = () => {
       const totals = dayData.reduce(
         (acc, meal) => {
           meal.food_items.forEach((item) => {
-            acc.calories += item.calories ? item.calories : 0;
-            acc.protein += parseFloat(item.protein) ? parseFloat(item.protein) : 0;
-            acc.carbs += parseFloat(item.carbs)? parseFloat(item.carbs) : 0;
+            acc.calories += Number(item.calories) || 0;
+            acc.protein += Number(item.protein) || 0;
+            acc.carbs += Number(item.carbs) || 0;
           });
           return acc;
         },
@@ -138,8 +138,10 @@ const NutritionalTracking = () => {
       );
 
       return {
-        date: format(day, "EEE"),
-        ...totals,
+        date: format(day, "EEE"), //this is Mon,Tue etc
+        calories: totals.calories,//and i changed this part so its not sub array/obj
+        protein: totals.protein,
+        carbs: totals.carbs,
       };
     });
   };
@@ -148,7 +150,7 @@ const NutritionalTracking = () => {
 /*
   weeklyData = [
     {
-      date: some formate, idk ask sonny,
+      date: string,
       totals : {
                   calories: ,
                   protein: ,
@@ -156,7 +158,7 @@ const NutritionalTracking = () => {
                }
     },
     {
-      date: some formate, idk ask sonny,
+      date: sting,
       totals : {
                   calories: ,
                   protein: ,
@@ -167,16 +169,23 @@ const NutritionalTracking = () => {
   ]
 */
 
+//taken from https://mui.com/
+
 <BarChart
   //need to have x-axis be days of the week (found in weeklyData.date)
   dataset = {weeklyData}
-  xAxis = {[{dataKey : 'date'}]} //idk if this does days of week or what
+  xAxis={[{ dataKey: "date", scaleType: "band" }]} //idk if this does days of week or what
   //then we need to have 3 bars for each day (weeklyData.totals.Cal/P/Carbs)
-  series = {[
-    {dataKey : 'totals.calories', label:'Calories'},
-    {dataKey : 'totals.protein', label : 'Protein'},
-    {dataKey : 'totals.carbs', label : 'Carbohydrates'}
+  series={[
+    { dataKey: "calories", label: "Calories", color: "#FF6384" },
+    { dataKey: "protein", label: "Protein", color: "#36A2EB" },
+    { dataKey: "carbs", label: "Carbohydrates", color: "#FFCE56" }
   ]}
+  height={400}
+  margin={{ top: 20, right: 30, left: 30, bottom: 50 }}
+
+  //the styling is taken from the documentation for the mui thingie
+
 />
 
 };
