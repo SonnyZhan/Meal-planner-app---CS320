@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
+import { useState, useEffect } from "react";
+//import { Line } from "react-chartjs-2";
+import {BarChart} from '@mui/x-charts/BarChart';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,7 +16,7 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
-  isWithinInterval,
+  //isWithinInterval,
 } from "date-fns";
 import axios from "axios";
 import "./NutritionalTracking.css";
@@ -30,11 +31,35 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+//basically the fetchWeeklyData will talk to our backend database (in urls.py in the backend folder)
+//there is a route which calls a method that returns a 2D array in the following format
+// {
+//   'id': combination.id,
+//   'date': combination.date,
+//   'meal_type': combination.meal_type,
+//   'menu': combination.menu.id,
+//   'food_items': [
+//       {
+//           'name': food.dish_name,
+//           'calories': food.calories,
+//           'protein': food.protein,
+//           'carbs': food.total_carb,
+//       }
+// }
+
+//we can process the raw data got from this method, and using useState, set it to the
+//weekly data variable
+
+//now the graph isn't working, but theres a better way to represent this data, and also a better library
+//so this branch will attempt to do that
+
+//since this component has a styling sheet, and is called in main componenet, ill just focus on
+//changing up the graphing library logic and stuff
 
 const NutritionalTracking = () => {
   const [weeklyData, setWeeklyData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [historicalData, setHistoricalData] = useState([]);
+  //const [historicalData, setHistoricalData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -53,6 +78,26 @@ const NutritionalTracking = () => {
 
         // Process the data to get daily totals
         const processedData = processWeeklyData(response.data);
+        // {
+        //   'id': combination.id,
+        //   'date': combination.date,
+        //   'meal_type': combination.meal_type,
+        //   'menu': combination.menu.id,
+        //   'food_items': [
+        //       {
+        //           'name': food.dish_name,
+        //           'calories': food.calories,
+        //           'protein': food.protein,
+        //           'carbs': food.total_carb,
+        //       }
+        // }
+        //processed weekly data takes above 2d array, and processed data turns into:
+        //array with{
+        //date: format(day, "EEE"),
+        // ...totals,
+        //};
+        //here totals represents the calories proteins and carbs
+        //that is stored in weekly data array
         setWeeklyData(processedData);
       } catch (err) {
         setError("Failed to fetch nutritional data");
@@ -83,9 +128,9 @@ const NutritionalTracking = () => {
       const totals = dayData.reduce(
         (acc, meal) => {
           meal.food_items.forEach((item) => {
-            acc.calories += item.calories || 0;
-            acc.protein += parseFloat(item.protein) || 0;
-            acc.carbs += parseFloat(item.carbs) || 0;
+            acc.calories += Number(item.calories) || 0;
+            acc.protein += Number(item.protein) || 0;
+            acc.carbs += Number(item.carbs) || 0;
           });
           return acc;
         },
@@ -93,132 +138,56 @@ const NutritionalTracking = () => {
       );
 
       return {
-        date: format(day, "EEE"),
-        ...totals,
+        date: format(day, "EEE"), //this is Mon,Tue etc
+        calories: totals.calories,//and i changed this part so its not sub array/obj
+        protein: totals.protein,
+        carbs: totals.carbs,
       };
     });
   };
 
-  // Chart options
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: "Weekly Nutritional Intake",
-        color: "#881c1c",
-        font: {
-          size: 16,
-          weight: "bold",
-        },
-      },
+//so i will use the weekly data array to represent a bar graph
+/*
+  weeklyData = [
+    {
+      date: string,
+      totals : {
+                  calories: ,
+                  protein: ,
+                  carbs: 
+               }
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: "rgba(136, 28, 28, 0.1)",
-        },
-        ticks: {
-          color: "#881c1c",
-        },
-      },
-      x: {
-        grid: {
-          color: "rgba(136, 28, 28, 0.1)",
-        },
-        ticks: {
-          color: "#881c1c",
-        },
-      },
+    {
+      date: sting,
+      totals : {
+                  calories: ,
+                  protein: ,
+                  carbs: 
+               }
     },
-  };
 
-  // Chart data
-  const chartData = {
-    labels: weeklyData.map((day) => day.date),
-    datasets: [
-      {
-        label: "Calories",
-        data: weeklyData.map((day) => day.calories),
-        borderColor: "#881c1c",
-        backgroundColor: "rgba(136, 28, 28, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Protein (g)",
-        data: weeklyData.map((day) => day.protein),
-        borderColor: "#c41e3a",
-        backgroundColor: "rgba(196, 30, 58, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Carbs (g)",
-        data: weeklyData.map((day) => day.carbs),
-        borderColor: "#2c5282",
-        backgroundColor: "rgba(44, 82, 130, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
+  ]
+*/
 
-  if (loading) {
-    return <div className="loading">Loading nutritional data...</div>;
-  }
+//taken from https://mui.com/
 
-  if (error) {
-    return <div className="error">{error}</div>;
-  }
+<BarChart
+  //need to have x-axis be days of the week (found in weeklyData.date)
+  dataset = {weeklyData}
+  xAxis={[{ dataKey: "date", scaleType: "band" }]} //idk if this does days of week or what
+  //then we need to have 3 bars for each day (weeklyData.totals.Cal/P/Carbs)
+  series={[
+    { dataKey: "calories", label: "Calories", color: "#FF6384" },
+    { dataKey: "protein", label: "Protein", color: "#36A2EB" },
+    { dataKey: "carbs", label: "Carbohydrates", color: "#FFCE56" }
+  ]}
+  height={400}
+  margin={{ top: 20, right: 30, left: 30, bottom: 50 }}
 
-  return (
-    <div className="nutritional-tracking">
-      <div className="chart-container">
-        <div className="chart-header">
-          <h2>Weekly Nutritional Overview</h2>
-          <div className="date-selector">
-            <input
-              type="date"
-              value={format(selectedDate, "yyyy-MM-dd")}
-              onChange={(e) => setSelectedDate(new Date(e.target.value))}
-              className="date-input"
-            />
-          </div>
-        </div>
-        <div className="chart-wrapper">
-          <Line options={options} data={chartData} />
-        </div>
-      </div>
+  //the styling is taken from the documentation for the mui thingie
 
-      <div className="nutritional-summary">
-        <h3>Daily Summary</h3>
-        <div className="summary-grid">
-          {weeklyData.map((day, index) => (
-            <div key={index} className="summary-card">
-              <h4>{day.date}</h4>
-              <div className="summary-item">
-                <span>Calories:</span>
-                <span>{Math.round(day.calories)} kcal</span>
-              </div>
-              <div className="summary-item">
-                <span>Protein:</span>
-                <span>{Math.round(day.protein)}g</span>
-              </div>
-              <div className="summary-item">
-                <span>Carbs:</span>
-                <span>{Math.round(day.carbs)}g</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+/>
+
 };
 
 export default NutritionalTracking;
