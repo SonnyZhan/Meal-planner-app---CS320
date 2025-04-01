@@ -28,6 +28,53 @@
   margin: 0;
 }
 
+.week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #881c1c;
+  border-radius: 6px;
+  background-color: white;
+  color: #881c1c;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 120px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(136, 28, 28, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-button:hover {
+  background-color: #881c1c;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(136, 28, 28, 0.2);
+}
+
+.nav-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(136, 28, 28, 0.1);
+}
+
+.week-range {
+  font-size: 1rem;
+  color: #881c1c;
+  font-weight: 500;
+  min-width: 140px;
+  text-align: center;
+  padding: 0.4rem 0.8rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(136, 28, 28, 0.1);
+}
+
 .date-selector {
   display: flex;
   align-items: center;
@@ -45,6 +92,12 @@
 }
 
 .date-input:hover {
+  border-color: #c41e3a;
+  box-shadow: 0 0 0 2px rgba(136, 28, 28, 0.1);
+}
+
+.date-input:focus {
+  outline: none;
   border-color: #c41e3a;
   box-shadow: 0 0 0 2px rgba(136, 28, 28, 0.1);
 }
@@ -139,6 +192,104 @@
   border: 1px solid #dc3545;
 }
 
+.daily-overview {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(136, 28, 28, 0.1);
+  margin-top: 2rem;
+  border: 1px solid rgba(136, 28, 28, 0.1);
+}
+
+.daily-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.daily-header h2 {
+  color: #881c1c;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.selected-date {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.meals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.meal-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(136, 28, 28, 0.05);
+  border: 1px solid rgba(136, 28, 28, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.meal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(136, 28, 28, 0.1);
+}
+
+.meal-card h3 {
+  color: #881c1c;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+  text-transform: capitalize;
+}
+
+.food-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.food-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(136, 28, 28, 0.05);
+}
+
+.food-item h4 {
+  color: #333;
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.nutrition-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.nutrition-info span {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(136, 28, 28, 0.05);
+}
+
 @media (max-width: 768px) {
   .nutritional-tracking {
     padding: 1rem;
@@ -161,5 +312,17 @@
 
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .daily-overview {
+    padding: 1rem;
+  }
+
+  .meals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .meal-card {
+    padding: 1rem;
   }
 }
