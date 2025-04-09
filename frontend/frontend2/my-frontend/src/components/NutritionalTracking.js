@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-//import { Line } from "react-chartjs-2";
-import {BarChart} from '@mui/x-charts/BarChart';
+import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  BarElement,
 } from "chart.js";
 import {
   format,
@@ -30,7 +31,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  BarElement
 );
 //basically the fetchWeeklyData will talk to our backend database (in urls.py in the backend folder)
 //there is a route which calls a method that returns a 2D array in the following format
@@ -73,25 +75,26 @@ const NutritionalTracking = () => {
         const token = localStorage.getItem("token");
         const weekStart = startOfWeek(selectedDate);
         const weekEnd = endOfWeek(selectedDate);
-        
+
         const response = await axios.get(
           "http://localhost:8000/api/user_meal_combinations/",
           {
             headers: { Authorization: `Token ${token}` },
-            params: { 
+            params: {
               start_date: format(weekStart, "yyyy-MM-dd"),
-              end_date: format(weekEnd, "yyyy-MM-dd")
+              end_date: format(weekEnd, "yyyy-MM-dd"),
             },
           }
         );
 
         const processedData = processWeeklyData(response.data);
         setWeeklyData(processedData);
-        
+
         // Process daily meals for the selected date
         const selectedDateStr = format(selectedDailyDate, "yyyy-MM-dd");
         const selectedDayMeals = response.data.filter(
-          (item) => format(new Date(item.date), "yyyy-MM-dd") === selectedDateStr
+          (item) =>
+            format(new Date(item.date), "yyyy-MM-dd") === selectedDateStr
         );
         setDailyMeals(selectedDayMeals);
       } catch (err) {
@@ -109,30 +112,30 @@ const NutritionalTracking = () => {
   const processWeeklyData = (data) => {
     const weekStart = startOfWeek(selectedDate);
     const weekEnd = endOfWeek(selectedDate);
-
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
     return days.map((day) => {
       const formattedDay = format(day, "yyyy-MM-dd");
-      
-      const dayData = data.filter(
-        (item) => format(new Date(item.date), "yyyy-MM-dd") === formattedDay
-      );
+      const dayData = data.filter((item) => item.date === formattedDay);
 
       const totals = dayData.reduce(
         (acc, meal) => {
           meal.food_items.forEach((item) => {
-            // Protein and carbs are strings, so converted them to numbers
-            const proteinValue = parseFloat(item.protein.replace(/[^0-9.-]+/g, '')) || 0;
-            const carbsValue = parseFloat(item.carbs.replace(/[^0-9.-]+/g, '')) || 0;
-            
+            const proteinValue =
+              parseFloat(item.protein.replace(/[^0-9.-]+/g, "")) || 0;
+            const carbsValue =
+              parseFloat(item.carbs.replace(/[^0-9.-]+/g, "")) || 0;
+            const fatValue =
+              parseFloat(item.fat?.replace(/[^0-9.-]+/g, "")) || 0;
+
             acc.calories += Number(item.calories) || 0;
             acc.protein += proteinValue;
             acc.carbs += carbsValue;
+            acc.fat += fatValue;
           });
           return acc;
         },
-        { calories: 0, protein: 0, carbs: 0 }
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
       );
 
       return {
@@ -140,6 +143,7 @@ const NutritionalTracking = () => {
         calories: Math.round(totals.calories),
         protein: Math.round(totals.protein),
         carbs: Math.round(totals.carbs),
+        fat: Math.round(totals.fat),
       };
     });
   };
@@ -158,7 +162,7 @@ const NutritionalTracking = () => {
 
   const handleDayClick = (day) => {
     const weekStart = startOfWeek(selectedDate);
-    const dayIndex = weeklyData.findIndex(d => d.date === day);
+    const dayIndex = weeklyData.findIndex((d) => d.date === day);
     if (dayIndex !== -1) {
       const newDate = new Date(weekStart);
       newDate.setDate(weekStart.getDate() + dayIndex);
@@ -169,15 +173,70 @@ const NutritionalTracking = () => {
   const handleDailyDateChange = (event) => {
     const selectedDate = event.target.value;
     // Create date in local timezone to avoid UTC conversion issues
-    const newDate = new Date(selectedDate + 'T00:00:00');
+    const newDate = new Date(selectedDate + "T00:00:00");
     setSelectedDailyDate(newDate);
   };
 
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
 
-  const weekRange = `${format(startOfWeek(selectedDate), "MMM d")} - ${format(endOfWeek(selectedDate), "MMM d")}`;
+  const weekRange = `${format(startOfWeek(selectedDate), "MMM d")} - ${format(
+    endOfWeek(selectedDate),
+    "MMM d"
+  )}`;
   const selectedDayStr = format(selectedDate, "MMMM d, yyyy");
+
+  const chartData = {
+    labels: weeklyData.map((data) => data.date),
+    datasets: [
+      {
+        label: "Calories",
+        data: weeklyData.map((data) => data.calories),
+        backgroundColor: "rgba(255, 99, 132, 0.5)",
+        borderColor: "rgb(255, 99, 132)",
+        borderWidth: 1,
+      },
+      {
+        label: "Protein (g)",
+        data: weeklyData.map((data) => data.protein),
+        backgroundColor: "rgba(54, 162, 235, 0.5)",
+        borderColor: "rgb(54, 162, 235)",
+        borderWidth: 1,
+      },
+      {
+        label: "Carbs (g)",
+        data: weeklyData.map((data) => data.carbs),
+        backgroundColor: "rgba(75, 192, 192, 0.5)",
+        borderColor: "rgb(75, 192, 192)",
+        borderWidth: 1,
+      },
+      {
+        label: "Fat (g)",
+        data: weeklyData.map((data) => data.fat || 0),
+        backgroundColor: "rgba(153, 102, 255, 0.5)",
+        borderColor: "rgb(153, 102, 255)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+        text: "Weekly Nutritional Data",
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
 
   return (
     <div className="nutritional-tracking">
@@ -185,38 +244,20 @@ const NutritionalTracking = () => {
         <div className="chart-header">
           <h2>Weekly Nutritional Overview</h2>
           <div className="week-navigation">
-            <button onClick={handlePreviousWeek} className="nav-button">Previous Week</button>
+            <button onClick={handlePreviousWeek} className="nav-button">
+              Previous Week
+            </button>
             <span className="week-range">{weekRange}</span>
-            <button onClick={handleNextWeek} className="nav-button">Next Week</button>
-            <button onClick={handleCurrentWeek} className="nav-button">Current Week</button>
+            <button onClick={handleNextWeek} className="nav-button">
+              Next Week
+            </button>
+            <button onClick={handleCurrentWeek} className="nav-button">
+              Current Week
+            </button>
           </div>
         </div>
         <div className="chart-wrapper">
-          <BarChart
-            dataset={weeklyData}
-            xAxis={[{ dataKey: "date", scaleType: "band" }]}
-            yAxis={[
-              {
-                scaleType: "linear",
-                min: 0,
-                max: Math.max(...weeklyData.map(d => Math.max(d.calories, d.protein, d.carbs))) * 1.2,
-                tickCount: 6,
-                valueFormatter: (value) => {
-                  if (value >= 1000) {
-                    return (value / 1000).toFixed(1) + 'k';
-                  }
-                  return value.toString();
-                }
-              }
-            ]}
-            series={[
-              { dataKey: "calories", label: "Calories", color: "#FF6384" },
-              { dataKey: "protein", label: "Protein", color: "#36A2EB" },
-              { dataKey: "carbs", label: "Carbohydrates", color: "#FFCE56" }
-            ]}
-            height={400}
-            margin={{ top: 20, right: 30, left: 30, bottom: 50 }}
-          />
+          <Bar data={chartData} options={chartOptions} />
         </div>
       </div>
 
@@ -232,14 +273,18 @@ const NutritionalTracking = () => {
             />
           </div>
         </div>
-        <div className="selected-date">{format(selectedDailyDate, "MMMM d, yyyy")}</div>
+        <div className="selected-date">
+          {format(selectedDailyDate, "MMMM d, yyyy")}
+        </div>
         <div className="meals-grid">
           {dailyMeals.map((meal, index) => {
             const totals = meal.food_items.reduce(
               (acc, item) => {
-                const proteinValue = parseFloat(item.protein.replace(/[^0-9.-]+/g, '')) || 0;
-                const carbsValue = parseFloat(item.carbs.replace(/[^0-9.-]+/g, '')) || 0;
-                
+                const proteinValue =
+                  parseFloat(item.protein.replace(/[^0-9.-]+/g, "")) || 0;
+                const carbsValue =
+                  parseFloat(item.carbs.replace(/[^0-9.-]+/g, "")) || 0;
+
                 acc.calories += Number(item.calories) || 0;
                 acc.protein += proteinValue;
                 acc.carbs += carbsValue;
