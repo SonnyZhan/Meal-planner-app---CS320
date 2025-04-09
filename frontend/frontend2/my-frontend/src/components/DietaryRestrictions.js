@@ -19,7 +19,6 @@ const DietaryRestrictions = () => {
     "Shellfish Allergy",
     "Dairy Allergy",
     "Egg Allergy",
-    "Peanut Allergy",
   ];
 
   const handleRestrictionChange = (value) => {

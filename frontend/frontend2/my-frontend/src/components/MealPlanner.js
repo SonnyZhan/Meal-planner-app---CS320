@@ -4,10 +4,8 @@ import "./MealPlanner.css";
 
 const TIME_SLOTS = [
   { value: "breakfast", label: "Breakfast" },
-  { value: "brunch", label: "Brunch" },
   { value: "lunch", label: "Lunch" },
   { value: "dinner", label: "Dinner" },
-  { value: "late night", label: "Late Night" },
 ];
 
 const DINING_HALLS = [
@@ -29,6 +27,8 @@ const MealPlanner = () => {
   const [meals, setMeals] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [swapMode, setSwapMode] = useState(false);
 
   const handleMealPlannerSubmit = async (event) => {
     event.preventDefault();
@@ -36,6 +36,8 @@ const MealPlanner = () => {
     setLoading(true);
     setShowPopup(false);
     setMeals([]);
+    setSwapMode(false);
+    setSelectedFood(null);
 
     if (
       !selectedDiningHall ||
@@ -107,6 +109,8 @@ const MealPlanner = () => {
   const handleClosePopup = () => {
     setShowPopup(false);
     setMeals([]);
+    setSwapMode(false);
+    setSelectedFood(null);
   };
 
   const handleAddToMealPlan = async (mealIndex) => {
@@ -157,6 +161,43 @@ const MealPlanner = () => {
       );
       setError("Failed to save meal plan.");
     }
+  };
+
+  const handleSwapClick = (mealIndex, foodIndex, food) => {
+    if (!swapMode) {
+      setSelectedFood({ mealIndex, foodIndex, food });
+      setSwapMode(true);
+    } else {
+      if (
+        selectedFood.mealIndex === mealIndex &&
+        selectedFood.foodIndex === foodIndex
+      ) {
+        setSwapMode(false);
+        setSelectedFood(null);
+        return;
+      }
+
+      const updatedMeals = [...meals];
+      const sourceMeal = [...updatedMeals[selectedFood.mealIndex]];
+      const targetMeal = [...updatedMeals[mealIndex]];
+
+      const tempFood = sourceMeal[selectedFood.foodIndex];
+      sourceMeal[selectedFood.foodIndex] = targetMeal[foodIndex];
+      targetMeal[foodIndex] = tempFood;
+
+      updatedMeals[selectedFood.mealIndex] = sourceMeal;
+      updatedMeals[mealIndex] = targetMeal;
+
+      setMeals(updatedMeals);
+
+      setSwapMode(false);
+      setSelectedFood(null);
+    }
+  };
+
+  const cancelSwap = () => {
+    setSwapMode(false);
+    setSelectedFood(null);
   };
 
   return (
@@ -300,30 +341,136 @@ const MealPlanner = () => {
               </button>
             </div>
             <div className="modal-body">
+              {swapMode && (
+                <div className="swap-instructions">
+                  <p>Select another food item to swap with the selected one</p>
+                  <button onClick={cancelSwap} className="cancel-swap-button">
+                    Cancel Swap
+                  </button>
+                </div>
+              )}
               <div className="meals-grid">
-                {meals.map((meal, index) => (
-                  <div key={index} className="meal-card">
-                    <h4>Option {index + 1}</h4>
-                    <div className="meal-items">
-                      {meal.map((item, idx) => (
-                        <div key={idx} className="food-item">
-                          <h5>{item.dish_name}</h5>
-                          <div className="nutrition-info">
-                            <span>Calories: {item.calories} kcal</span>
-                            <span>Proteins: {item.protein} g</span>
-                            <span>Carbs: {item.total_carbs} g</span>
+                {meals.map((meal, index) => {
+                  const totals = meal.reduce(
+                    (acc, item) => ({
+                      calories: acc.calories + (item.calories || 0),
+                      protein: acc.protein + parseFloat(item.protein || 0),
+                      carbs: acc.carbs + parseFloat(item.total_carbs || 0),
+                    }),
+                    { calories: 0, protein: 0, carbs: 0 }
+                  );
+
+                  return (
+                    <div key={index} className="meal-card">
+                      <div className="meal-card-header">
+                        <h4>Option {index + 1}</h4>
+                        <div className="meal-card-badge">
+                          {Math.abs(totals.calories - parseInt(calories)) <= 50
+                            ? "Perfect Match! 🎯"
+                            : "Close Match"}
+                        </div>
+                      </div>
+                      <div className="meal-items">
+                        {meal.map((item, idx) => {
+                          const isSelected =
+                            swapMode &&
+                            selectedFood &&
+                            selectedFood.mealIndex === index &&
+                            selectedFood.foodIndex === idx;
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`food-item ${
+                                isSelected ? "selected-for-swap" : ""
+                              }`}
+                            >
+                              <div className="food-item-header">
+                                <h5>{item.dish_name}</h5>
+                                <button
+                                  className={`swap-button ${
+                                    isSelected ? "selected" : ""
+                                  }`}
+                                  onClick={() =>
+                                    handleSwapClick(index, idx, item)
+                                  }
+                                  title={
+                                    swapMode
+                                      ? "Click to swap with this food"
+                                      : "Click to select for swapping"
+                                  }
+                                >
+                                  {isSelected ? "✓" : "⇄"}
+                                </button>
+                              </div>
+                              <div className="nutrition-info">
+                                <span className="nutrition-badge calories">
+                                  <span className="badge-icon">🔥</span>
+                                  {item.calories} kcal
+                                </span>
+                                <span className="nutrition-badge protein">
+                                  <span className="badge-icon">🥩</span>
+                                  {item.protein} g
+                                </span>
+                                <span className="nutrition-badge carbs">
+                                  <span className="badge-icon">🌾</span>
+                                  {item.total_carbs} g
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="meal-totals">
+                        <h6>Meal Totals</h6>
+                        <div className="totals-grid">
+                          <div className="total-item">
+                            <span className="total-label">Total Calories</span>
+                            <span className="total-value">
+                              {Math.round(totals.calories)} kcal
+                            </span>
+                            <span className="total-diff">
+                              {totals.calories > parseInt(calories) ? "+" : ""}
+                              {Math.round(
+                                totals.calories - parseInt(calories)
+                              )}{" "}
+                              kcal
+                            </span>
+                          </div>
+                          <div className="total-item">
+                            <span className="total-label">Total Protein</span>
+                            <span className="total-value">
+                              {Math.round(totals.protein)} g
+                            </span>
+                            <span className="total-diff">
+                              {totals.protein > parseFloat(proteins) ? "+" : ""}
+                              {Math.round(
+                                totals.protein - parseFloat(proteins)
+                              )}{" "}
+                              g
+                            </span>
+                          </div>
+                          <div className="total-item">
+                            <span className="total-label">Total Carbs</span>
+                            <span className="total-value">
+                              {Math.round(totals.carbs)} g
+                            </span>
+                            <span className="total-diff">
+                              {totals.carbs > parseFloat(carbs) ? "+" : ""}
+                              {Math.round(totals.carbs - parseFloat(carbs))} g
+                            </span>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                      <button
+                        onClick={() => handleAddToMealPlan(index)}
+                        className="add-button"
+                      >
+                        Add to Meal Plan
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleAddToMealPlan(index)}
-                      className="add-button"
-                    >
-                      Add to Meal Plan
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
