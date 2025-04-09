@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Contributors from "./Contributors";
 import "./LandingPage.css";
 
 const LandingPage = () => {
@@ -13,7 +14,7 @@ const LandingPage = () => {
       setIsVisible(scrollPosition < 100);
 
       // Update active section based on scroll position
-      const sections = ["hero", "features", "dining-halls"];
+      const sections = ["hero", "features", "dining-halls", "contributors"];
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
@@ -33,7 +34,15 @@ const LandingPage = () => {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      const headerOffset = 80; // Adjust this value based on your header height
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition =
+        elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
     }
   };
 
@@ -102,6 +111,16 @@ const LandingPage = () => {
               onClick={() => scrollToSection("dining-halls")}
             >
               Dining Halls
+            </button>
+          </li>
+          <li>
+            <button
+              className={`nav-item ${
+                activeSection === "contributors" ? "active" : ""
+              }`}
+              onClick={() => scrollToSection("contributors")}
+            >
+              Contributors
             </button>
           </li>
         </ul>
@@ -181,6 +200,8 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
+
+      <Contributors />
     </div>
   );
 };
