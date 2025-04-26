@@ -16,9 +16,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'dining_halls': reverse('dining_hall_list_create', request=request, format=format),
+        'menus': reverse('get_menus', request=request, format=format),
+        'foods': reverse('get_all_foods', request=request, format=format),
+        'allergens': reverse('get_allergens', request=request, format=format),
+        'user_info': reverse('get_user_info', request=request, format=format),
+        'user_preferences': reverse('get_user_preferences', request=request, format=format),
+    })
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', api_root, name='api-root'),
     path('api/', include('meal_db.urls')),
 ]
     
