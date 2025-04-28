@@ -18,11 +18,11 @@ const Contributors = () => {
       image: "/images/fuming.png",
     },
     {
-      name: "Arvind Udayabanu",
-      title: "Frontend Developer",
+      name: "Marco Diaz Moore",
+      title: "Cloud Consultant",
       role: "role",
       contact: "contact",
-      image: "/images/arvind.png",
+      image: "/images/marco.png",
     },
     {
       name: "Eduardo Shibata",
