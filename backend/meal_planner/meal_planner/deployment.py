@@ -7,6 +7,9 @@ from .settings import BASE_DIR
 ALLOWED_HOSTS = [os.environ.get("WEBSITE_HOSTNAME", "")]
 CSRF_TRUSTED_ORIGINS = [f"https://{ALLOWED_HOSTS[0]}"]
 DEBUG = False
+
+if "MY_SECRET_KEY" not in os.environ:
+    raise RuntimeError("Environment variable MY_SECRET_KEY is not set. Please set it in Azure App Service configuration.")
 SECRET_KEY = os.environ["MY_SECRET_KEY"]
 
 MIDDLEWARE = [
@@ -33,6 +36,8 @@ STORAGES = {
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ─── Parse Azure's space-delimited libpq string ────────────────────────────────
+if "AZURE_POSTGRESQL_CONNECTIONSTRING" not in os.environ:
+    raise RuntimeError("Environment variable AZURE_POSTGRESQL_CONNECTIONSTRING is not set. Please set it in Azure App Service configuration.")
 raw = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING", "")
 # replace any semicolons with spaces, then shlex-split on whitespace
 tokens = shlex.split(raw.replace(";", " "))

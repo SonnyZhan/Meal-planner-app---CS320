@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -24,27 +24,39 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Create and start virtual environment
+        run: |
+          cd backend
+          cd meal_planner
+          python -m venv venv
+          source venv/bin/activate
+
       - name: Install dependencies
         run: |
-          cd backend/meal_planner
+          cd backend
           python -m pip install --upgrade pip
-          pip install -r ../requirements.txt
+          pip install -r requirements.txt
 
       - name: Collect static files
         run: |
-          cd backend/meal_planner
+          cd backend
+          cd meal_planner
           python manage.py collectstatic --noinput
+
+      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
         run: |
           cd backend/meal_planner
-          zip -r ../../python-app.zip .
+          zip release.zip ./* -r
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: python-app.zip
+          path: |
+            backend/meal_planner/release.zip
+            !venv/
 
   deploy:
     runs-on: ubuntu-latest
@@ -60,7 +72,7 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: unzip python-app.zip
+        run: unzip release.zip
 
       - name: "Deploy to Azure Web App"
         uses: azure/webapps-deploy@v3
