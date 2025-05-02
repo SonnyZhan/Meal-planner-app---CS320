@@ -19,10 +19,13 @@ from django.urls import path, include
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.routers import DefaultRouter
+from . import views
 
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({
+        'message': 'Welcome to the Meal Planner API!',
         'dining_halls': reverse('dining_hall_list_create', request=request, format=format),
         'menus': reverse('get_menus', request=request, format=format),
         'foods': reverse('get_all_foods', request=request, format=format),
@@ -31,9 +34,12 @@ def api_root(request, format=None):
         'user_preferences': reverse('get_user_preferences', request=request, format=format),
     })
 
+router = DefaultRouter()
+# router.register(...)  # your viewsets
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', api_root, name='api-root'),
+    path('admin/', admin.site.urls),
     path('api/', include('meal_db.urls')),
 ]
     
