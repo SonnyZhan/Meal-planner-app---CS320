@@ -45,17 +45,20 @@ jobs:
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
+      - name: Copy requirements.txt to app folder
+        run: cp backend/requirements.txt backend/meal_planner/requirements.txt
+
       - name: Zip artifact for deployment
         run: |
           cd backend/meal_planner
-          zip release.zip ./* -r
+          zip -r ../../python-app.zip .
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
           path: |
-            backend/meal_planner/release.zip
+            backend/release.zip
             !venv/
 
   deploy:
