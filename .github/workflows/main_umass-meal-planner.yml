@@ -57,9 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            backend/release.zip
-            !venv/
+          path: python-app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -75,7 +73,7 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: unzip python-app.zip
 
       - name: "Deploy to Azure Web App"
         uses: azure/webapps-deploy@v3
