@@ -7,48 +7,42 @@ const Contributors = () => {
       name: "Professor Jaime Davila",
       title: "Professor & Project Advisor",
       role: "Computer Science Department",
-      contact: "contact",
-      image: "/images/professor.png",
+      contact: "https://www.linkedin.com/in/jaime-davila-379a9277/",
+      image: "/images/jaime.jpeg",
     },
     {
       name: "Fuming Zhang",
       title: "Lead Software Engineer",
-      role: "role",
       contact: "https://www.linkedin.com/in/fuming-zhang-951a09290/",
       image: "/images/fuming.png",
     },
     {
       name: "Marco Diaz Moore",
       title: "Cloud Consultant",
-      role: "role",
-      contact: "contact",
+      contact: "https://www.linkedin.com/in/marco-diaz-moore-9a7188221/",
       image: "/images/marco.png",
     },
     {
       name: "Eduardo Shibata",
       title: "Lead Backend Developer",
-      role: "role",
-      contact: "contact",
+      contact: "http://linkedin.com/in/eduardo-shibata-6555b2256/",
       image: "/images/eduardo.png",
     },
     {
       name: "Atharve Pandey",
       title: "Backend Developer",
-      role: "role",
       contact: "https://www.linkedin.com/in/atharve-pandey-359ab8200/",
       image: "/images/atharve.png",
     },
     {
       name: "Brian Nguyen",
       title: "Backend Developer",
-      role: "role",
       contact: "https://www.linkedin.com/in/brian-nguyen-040915254/",
-      image: "/images/brian.png",
+      image: "/images/brian2.jpeg",
     },
     {
       name: "Sahil",
       title: "Backend Developer",
-      role: "role",
       contact: "https://www.linkedin.com/in/sahil-gulati-b991a62a2/",
       image: "/images/sashil.png",
     },
@@ -79,7 +73,6 @@ const Contributors = () => {
               <div className="contributor-info">
                 <h3>{contributor.name}</h3>
                 <p className="title">{contributor.title}</p>
-                <p className="role">{contributor.role}</p>
                 <p
                   className={`contact ${
                     contributor.contact !== "contact" ? "clickable" : ""
