@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import Contributors from "./Contributors";
 import "./LandingPage.css";
+import {
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate,
+  useMsal,
+} from "@azure/msal-react";
+import { loginRequest } from "../auth-config";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(true);
   const [activeSection, setActiveSection] = useState("hero");
+  const { instance } = useMsal();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,11 +84,30 @@ const LandingPage = () => {
     },
   ];
 
+  const handleLogin = () => {
+    instance.loginRedirect(loginRequest).catch((error) => {
+      console.error("Error logging in:", error);
+    });
+  };
+
+  const activeAccount = instance.getAllAccounts()[0];
+
+  const handleLogout = () => {
+    instance.logoutRedirect();
+  };
+
   return (
     <div className="landing-page">
-      <button className="login-button" onClick={() => navigate("/login")}>
-        Login
-      </button>
+      <div>
+        <AuthenticatedTemplate>
+          {activeAccount ? <Navigate to="/allergy-filter" /> : null}
+        </AuthenticatedTemplate>
+        <UnauthenticatedTemplate>
+          <button className="login-button" onClick={handleLogin}>
+            Login
+          </button>
+        </UnauthenticatedTemplate>
+      </div>
 
       <nav className="side-nav">
         <ul>
@@ -200,6 +226,10 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
+
+      <AuthenticatedTemplate>
+        <button onClick={handleLogout}>Logout</button>
+      </AuthenticatedTemplate>
 
       <Contributors />
     </div>

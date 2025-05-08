@@ -24,3 +24,5 @@ psycopg2==2.9.10
 soupsieve==2.6
 sqlparse==0.5.1
 typing_extensions==4.12.2
+azure-msal-browser==4.11.1
+azure-msal-react==3.0.11

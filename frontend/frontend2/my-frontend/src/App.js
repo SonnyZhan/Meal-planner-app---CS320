@@ -18,12 +18,14 @@ import "./App.css";
 import DietaryRestrictions from "./components/DietaryRestrictions";
 import ProfilePage from "./components/ProfilePage";
 import LandingPage from "./components/LandingPage";
+import { useMsal } from "@azure/msal-react";
 
 const App = () => {
+  const { instance } = useMsal();
+  const activeAccount = instance.getAllAccounts()[0];
   const [diningHalls, setDiningHalls] = useState([]);
   const [foods, setFoods] = useState([]);
   const [menus, setMenus] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     fetchDiningHalls();
@@ -56,37 +58,46 @@ const App = () => {
     setFoods([...foods, newFood]);
   };
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
   return (
     <Router>
       <div className="app">
-        {isLoggedIn && <NavigationBar />}
+        {activeAccount && <NavigationBar />}
         <div className="main-content">
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route
+              path="/"
+              element={
+                activeAccount ? (
+                  <Navigate to="/allergy-filter" />
+                ) : (
+                  <LandingPage />
+                )
+              }
+            />
             <Route
               path="/login"
               element={
-                isLoggedIn ? (
+                activeAccount ? (
                   <Navigate to="/allergy-filter" />
                 ) : (
-                  <Card onLogin={handleLogin} />
+                  <LandingPage />
                 )
               }
             />
             <Route
               path="/allergy-filter"
               element={
-                isLoggedIn ? <DietaryRestrictions /> : <Navigate to="/login" />
+                activeAccount ? (
+                  <DietaryRestrictions />
+                ) : (
+                  <Navigate to="/login" />
+                )
               }
             />
             <Route
               path="/search-food"
               element={
-                isLoggedIn ? (
+                activeAccount ? (
                   <MealPlanner menus={menus} />
                 ) : (
                   <Navigate to="/login" />
@@ -96,12 +107,14 @@ const App = () => {
             <Route
               path="/meal-planner"
               element={
-                isLoggedIn ? <MealCombinations /> : <Navigate to="/login" />
+                activeAccount ? <MealCombinations /> : <Navigate to="/login" />
               }
             />
             <Route
               path="/profile"
-              element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" />}
+              element={
+                activeAccount ? <ProfilePage /> : <Navigate to="/login" />
+              }
             />
           </Routes>
         </div>

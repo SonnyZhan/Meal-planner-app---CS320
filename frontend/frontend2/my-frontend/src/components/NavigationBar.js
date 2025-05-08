@@ -1,10 +1,12 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./NavigationBar.css";
+import { useMsal } from "@azure/msal-react";
 
 const NavigationBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { instance } = useMsal();
 
   const navItems = [
     { label: "Allergy Filter", path: "/allergy-filter", icon: "🔍" },
@@ -12,6 +14,12 @@ const NavigationBar = () => {
     { label: "Meal Planner", path: "/meal-planner", icon: "📅" },
     { label: "Profile", path: "/profile", icon: "👤" },
   ];
+
+  const handleLogout = () => {
+    instance.logoutRedirect().then(() => {
+      navigate("/");
+    });
+  };
 
   return (
     <nav className="nav">
@@ -33,6 +41,10 @@ const NavigationBar = () => {
               <span className="nav-label">{item.label}</span>
             </button>
           ))}
+          <button className="nav-link" onClick={handleLogout}>
+            <span className="nav-icon">🚪</span>
+            <span className="nav-label">Log Out</span>
+          </button>
         </div>
       </div>
     </nav>
