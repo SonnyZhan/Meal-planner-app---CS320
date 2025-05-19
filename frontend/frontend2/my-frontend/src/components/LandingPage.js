@@ -191,9 +191,14 @@ const LandingPage = () => {
           />
           <h1>UMass Meal Planner</h1>
           <p>Your personalized dining companion for the UMass Amherst campus</p>
-          <button onClick={() => navigate("/login")} className="cta-button">
-            Start Planning Your Meals
-          </button>
+          <AuthenticatedTemplate>
+            {activeAccount ? <Navigate to="/allergy-filter" /> : null}
+          </AuthenticatedTemplate>
+          <UnauthenticatedTemplate>
+            <button onClick={handleLogin} className="cta-button">
+              Start Planning Your Meals
+            </button>
+          </UnauthenticatedTemplate>
         </div>
         {isVisible && (
           <div
