@@ -84,10 +84,40 @@ const LandingPage = () => {
     },
   ];
 
-  const handleLogin = () => {
-    instance.loginRedirect(loginRequest).catch((error) => {
-      console.error("Error logging in:", error);
-    });
+  const handleLogin = async () => {
+    try {
+      const response = await instance.loginRedirect(loginRequest);
+      const account = response.account;
+
+      // After successful MSAL login, call our backend to create/authenticate user
+      const backendResponse = await fetch(
+        "http://localhost:8000/api/msal-callback/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            msal_user_id: account.localAccountId,
+            email: account.username,
+            display_name: account.name,
+          }),
+        }
+      );
+
+      if (!backendResponse.ok) {
+        throw new Error("Failed to authenticate with backend");
+      }
+
+      const userData = await backendResponse.json();
+      console.log("Backend authentication successful:", userData);
+
+      // Navigate to the allergy filter page after successful authentication
+      navigate("/allergy-filter");
+    } catch (error) {
+      console.error("Error during login:", error);
+    }
   };
 
   const activeAccount = instance.getAllAccounts()[0];

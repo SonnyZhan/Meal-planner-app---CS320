@@ -19,6 +19,7 @@ from django.urls import path, include
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from . import views
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -35,5 +36,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', api_root, name='api-root'),
     path('api/', include('meal_db.urls')),
+    path('api/msal-callback/', views.msal_auth_callback, name='msal-callback'),
 ]
     

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./ProfilePage.css";
 import NutritionalTracking from "./NutritionalTracking";
+import { useMsal } from "@azure/msal-react";
 
 const ProfilePage = () => {
+  const { instance, accounts } = useMsal();
   const [userInfo, setUserInfo] = useState(null);
   const [userPreferences, setUserPreferences] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,34 +18,66 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+        console.log("Fetching user data...");
+        console.log("MSAL Accounts:", accounts);
+
+        // Get the active account from MSAL
+        const account = accounts[0];
+        if (!account) {
+          console.log("No MSAL account found");
           setError("Please log in to view your profile");
           setLoading(false);
           return;
         }
 
-        const [userInfoResponse, preferencesResponse] = await Promise.all([
-          axios.get("http://localhost:8000/api/user_info/", {
-            headers: { Authorization: `Token ${token}` },
-          }),
-          axios.get("http://localhost:8000/api/user_preferences/", {
-            headers: { Authorization: `Token ${token}` },
-          }),
-        ]);
+        console.log("MSAL Account:", account);
 
-        setUserInfo(userInfoResponse.data);
-        setUserPreferences(preferencesResponse.data);
+        // Set user info from MSAL account
+        const userData = {
+          name: account.name || account.username,
+          email: account.username,
+        };
+        console.log("Setting user info:", userData);
+        setUserInfo(userData);
+
+        // Get the access token for API calls
+        const tokenResponse = await instance.acquireTokenSilent({
+          scopes: ["user.read"],
+          account: account,
+        });
+        console.log("Token acquired successfully");
+
+        // Fetch user preferences
+        try {
+          const preferencesResponse = await axios.get(
+            "http://localhost:8000/api/user_preferences/",
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${tokenResponse.accessToken}`,
+              },
+            }
+          );
+          console.log("User preferences fetched:", preferencesResponse.data);
+          setUserPreferences(preferencesResponse.data);
+        } catch (prefError) {
+          console.error("Error fetching preferences:", prefError);
+          // Set default preferences if the API call fails
+          setUserPreferences({
+            allergens: [],
+            dietary_restrictions: [],
+          });
+        }
       } catch (err) {
+        console.error("Error in fetchUserData:", err);
         setError("Failed to fetch user data");
-        console.error("Error fetching user data:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [instance, accounts]);
 
   const handleColorChange = (color) => {
     setHeaderColor(color);
